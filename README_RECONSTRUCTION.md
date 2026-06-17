@@ -29,7 +29,7 @@ Automation I/O fix:
 - Small electrical furnace input slots are insertion-only for automation.
 - Automation extraction is limited to layout result slots when a machine layout defines result slots.
 - Regression coverage was added to `MachineGuiGameTests`.
-- `runGameTestServer` now completes successfully; the latest local run passed 131 required GameTests.
+- `runGameTestServer` now completes successfully; the latest local run passed 132 required GameTests.
 
 Additional bug hunt fixes:
 
@@ -61,3 +61,4 @@ Additional bug hunt fixes:
 - Metal sliding door hitboxes now follow the centered closed panel and the side-stacked open model instead of using vanilla hinged-door edge boxes.
 - Machine menu progress meters now report normalized percentages, and Small Block Breaker total work ticks are synced to the menu.
 - Tracker tooltips ignore incomplete saved target custom data instead of showing fake origin coordinates.
+- Metal Rung Ladder and Staggered Metal Steps are tagged as `minecraft:climbable`, restoring player ladder movement.

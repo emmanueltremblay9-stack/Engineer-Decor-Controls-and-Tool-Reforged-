@@ -7,9 +7,9 @@ All notable reconstruction, repair, and validation changes for this project are 
 ### Validation
 
 - Confirmed `compileJava` passes.
-- Confirmed `runGameTestServer` passes with all 131 required GameTests.
+- Confirmed `runGameTestServer` passes with all 132 required GameTests.
 - Confirmed `build` passes and produces `build/libs/engineers_decor_reforged-1.1-reconstructed.jar`.
-- Latest rebuilt jar observed locally: `2,449,306` bytes, updated `2026-06-17 1:04:23 AM`.
+- Latest rebuilt jar observed locally: `2,450,208` bytes, updated `2026-06-17 3:21:21 PM`.
 
 ### Added
 
@@ -34,6 +34,7 @@ All notable reconstruction, repair, and validation changes for this project are 
   - metal sliding door hitboxes matching the visible closed/open models
   - machine menu progress meters reporting normalized percentages
   - tracker tooltips ignoring incomplete saved target data
+  - metal rung ladders and staggered metal steps registered as climbable blocks
 
 ### Fixed
 
@@ -68,6 +69,7 @@ All notable reconstruction, repair, and validation changes for this project are 
 - Normalized machine menu progress reporting for lab furnaces, electrical furnaces, temperature machines, and block breakers.
 - Synced Small Block Breaker process totals through menu data so progress percentages use the real configured work time.
 - Suppressed Tracker location tooltips when saved target custom data has a dimension but incomplete coordinates.
+- Added Metal Rung Ladder and Staggered Metal Steps to the vanilla `minecraft:climbable` block tag so player ladder movement works in-game.
 
 ### Repository
 
@@ -76,6 +78,7 @@ All notable reconstruction, repair, and validation changes for this project are 
 - Published REDIA Tool and pulse-control fixture repairs in commit `78489ce`.
 - Published factory hopper pulse collection and GameTest footprint repairs in commit `838a0cb`.
 - Published mod logo asset in commit `489efa6`.
+- Published menu progress and tracker tooltip repairs in commit `330dce5`.
 
 ### Known Follow-Up
 

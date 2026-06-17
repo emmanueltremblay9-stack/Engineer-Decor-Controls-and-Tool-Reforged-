@@ -6,6 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -153,6 +154,13 @@ public final class AccesswayBlockGameTests {
    }
 
    @GameTest(template = "empty", timeoutTicks = 40)
+   public static void metal_rung_ladders_are_marked_climbable(GameTestHelper helper) {
+      assertClimbable(helper, ModBlocks.METAL_RUNG_LADDER.get(), "metal rung ladder");
+      assertClimbable(helper, ModBlocks.METAL_RUNG_STEPS.get(), "staggered metal steps");
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 40)
    public static void surface_mounted_blocks_drop_when_support_is_removed(GameTestHelper helper) {
       BlockPos supportPos = new BlockPos(2, 2, 2);
       BlockPos lightPos = supportPos.north();
@@ -233,6 +241,10 @@ public final class AccesswayBlockGameTests {
       BlockHitResult hit = new BlockHitResult(hitLocation, face, absolutePos, false);
       BlockPlaceContext context = new BlockPlaceContext(helper.getLevel(), player, InteractionHand.MAIN_HAND, new ItemStack(block), hit);
       return block.getStateForPlacement(context);
+   }
+
+   private static void assertClimbable(GameTestHelper helper, Block block, String name) {
+      helper.assertTrue(block.defaultBlockState().is(BlockTags.CLIMBABLE), name + " should be in minecraft:climbable for ladder movement");
    }
 
    private static int variantFor(BlockPos pos) {
