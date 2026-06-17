@@ -2,6 +2,26 @@
 
 All notable reconstruction, repair, and validation changes for this project are recorded here.
 
+## [1.1.4-reconstructed] - 2026-06-17
+
+### Validation
+
+- Confirmed `runGameTestServer` passes with all 143 required GameTests.
+- Confirmed `clean build` passes and produces `build/libs/engineers_decor_reforged-1.1.4-reconstructed.jar`.
+- Installed the rebuilt jar into the Prism `1.21.1 TesT LaB` instance with matching SHA-256 hashes.
+
+### Fixed
+
+- Restored original Charged Lapis parity from Engineer's Tools:
+  - heals `maxHealth / 20` instead of a fixed 3 HP
+  - clears fire on use
+  - keeps the original foil item glint
+- Synchronized user-visible mod version metadata to `1.1.4-reconstructed`.
+
+### Added
+
+- Added GameTest coverage for Charged Lapis healing, fire clearing, XP grant, item consumption, and foil behavior.
+
 ## [1.1.1-reconstructed] - 2026-06-17
 
 ### Validation

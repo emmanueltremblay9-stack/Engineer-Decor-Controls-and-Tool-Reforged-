@@ -13,6 +13,12 @@ public class ChargedLapisItem extends TooltipItem {
       super("charged_lapis", properties);
    }
 
+   @Override
+   public boolean isFoil(ItemStack stack) {
+      return true;
+   }
+
+   @Override
    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
       ItemStack stack = player.getItemInHand(hand);
       if (level.isClientSide) {
@@ -21,7 +27,8 @@ public class ChargedLapisItem extends TooltipItem {
 
       player.giveExperienceLevels(1);
       player.removeAllEffects();
-      player.heal(3.0F);
+      player.clearFire();
+      player.heal(player.getMaxHealth() / 20.0F);
       if (!player.getAbilities().instabuild) {
          stack.shrink(1);
       }

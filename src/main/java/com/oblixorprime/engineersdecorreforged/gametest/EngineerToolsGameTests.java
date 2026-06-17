@@ -136,6 +136,26 @@ public final class EngineerToolsGameTests {
    }
 
    @GameTest(template = "empty", timeoutTicks = 40)
+   public static void charged_lapis_restores_original_healing_fire_and_glint_behavior(GameTestHelper helper) {
+      Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+      ItemStack chargedLapis = new ItemStack((ItemLike)EngineerToolsModule.CHARGED_LAPIS.get());
+      player.setItemInHand(InteractionHand.MAIN_HAND, chargedLapis);
+      player.setHealth(10.0F);
+      player.setRemainingFireTicks(100);
+      player.experienceLevel = 0;
+      chargedLapis.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
+      helper.assertTrue(Math.abs(player.getHealth() - 11.0F) < 0.001F, "charged lapis should heal the original max-health/20 amount");
+      helper.assertValueEqual(0, player.getRemainingFireTicks(), "charged lapis should clear fire like the original item");
+      helper.assertValueEqual(1, player.experienceLevel, "charged lapis should grant one XP level");
+      helper.assertTrue(chargedLapis.isEmpty(), "charged lapis should consume one item on use");
+      helper.assertTrue(
+         EngineerToolsModule.CHARGED_LAPIS.get().isFoil(new ItemStack((ItemLike)EngineerToolsModule.CHARGED_LAPIS.get())),
+         "charged lapis should keep the original foil glint"
+      );
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 40)
    public static void redia_tool_tills_workable_soil(GameTestHelper helper) {
       Player player = helper.makeMockPlayer(GameType.SURVIVAL);
       player.setShiftKeyDown(true);
