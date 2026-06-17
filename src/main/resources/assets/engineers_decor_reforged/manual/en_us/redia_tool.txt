@@ -1,7 +1,7 @@
 REDIA Tool
 Diamond-covered utility
-<&recipe>The REDIA Tool is a durable field utility for quick ground work around temporary sites and mine entrances.<br>
+<&recipe>The REDIA Tool is a durable diamond-grade multi-tool for field work around temporary sites, workshops, and mine entrances.<br>
 <br>
-Usage: Use it on grass, dirt, coarse dirt, rooted dirt, or podzol with clear air above to till farmland. Sneak-use it against a stable side or top face while carrying torches to place one torch from your inventory.<br>
+Usage: Use it while carrying torches to place one torch from your inventory. Sneak-use it to shear plants, cycle ground between dirt, farmland, coarse dirt, and dirt path, or strip logs. Sneak while breaking logs to fell connected tree blocks.<br>
 <br>
-Each successful tilling or torch placement damages the tool.
+Repair it with diamonds. Over-repairing a fully repaired REDIA Tool restores the original Efficiency and Fortune progression.

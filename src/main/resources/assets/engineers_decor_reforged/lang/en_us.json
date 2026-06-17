@@ -500,7 +500,7 @@
   "item.engineers_decor_reforged.musli_bar_press.msg.ingredients": "Need bread, an apple, and wheat seeds.",
   "item.engineers_decor_reforged.musli_bar_press.msg.pressed": "Pressed a batch of Muslee bars.",
   "item.engineers_decor_reforged.redia_tool": "REDIA Tool",
-  "item.engineers_decor_reforged.redia_tool.help": "Diamond-covered field utility.\n Use it to till workable soil;\n sneak-use with torches in your\n pack to place a torch marker.",
+  "item.engineers_decor_reforged.redia_tool.help": "Diamond-covered multi-tool.\n Use with torches to place one;\n sneak-use to shear, cycle soil,\n strip logs, or fell trees.",
   "item.engineers_decor_reforged.redia_tool.msg.badtarget": "The REDIA Tool has no useful work there.",
   "item.engineers_decor_reforged.redia_tool.msg.notorch": "No torch available for marker placement.",
   "item.engineers_decor_reforged.sleeping_bag": "Sleeping Bag",

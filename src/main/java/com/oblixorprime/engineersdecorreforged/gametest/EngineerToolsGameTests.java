@@ -4,20 +4,27 @@ import com.oblixorprime.engineersdecorreforged.ModBlocks;
 import com.oblixorprime.engineersdecorreforged.block.PortedBlocks;
 import com.oblixorprime.engineersdecorreforged.tools.EngineerToolsModule;
 import com.oblixorprime.engineersdecorreforged.tools.MaterialBoxItem;
+import com.oblixorprime.engineersdecorreforged.tools.RediaToolRepairRecipe;
 import com.oblixorprime.engineersdecorreforged.tools.TooltipItem;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Pig;
+import net.minecraft.world.entity.animal.Sheep;
+import net.minecraft.world.entity.monster.ZombifiedPiglin;
+import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -27,6 +34,11 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.Item.TooltipContext;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.item.crafting.CraftingBookCategory;
+import net.minecraft.world.item.crafting.CraftingInput;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
@@ -34,6 +46,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.ItemAbilities;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -124,11 +137,12 @@ public final class EngineerToolsGameTests {
    @GameTest(template = "empty", timeoutTicks = 40)
    public static void redia_tool_tills_workable_soil(GameTestHelper helper) {
       Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+      player.setShiftKeyDown(true);
       ItemStack redia = new ItemStack((ItemLike)EngineerToolsModule.REDIA_TOOL.get());
       helper.setBlock(TEST_POS, Blocks.DIRT);
       helper.setBlock(TEST_POS.above(), Blocks.AIR);
       ((Item)EngineerToolsModule.REDIA_TOOL.get()).useOn(context(helper, player, redia, TEST_POS, Direction.UP));
-      helper.assertTrue(helper.getBlockState(TEST_POS).is(Blocks.FARMLAND), "REDIA Tool should till workable soil");
+      helper.assertTrue(helper.getBlockState(TEST_POS).is(Blocks.FARMLAND), "sneak-use REDIA Tool should till workable soil");
       helper.assertValueEqual(1, redia.getDamageValue(), "REDIA Tool should wear on successful tilling");
       helper.succeed();
    }
@@ -137,11 +151,12 @@ public final class EngineerToolsGameTests {
    public static void redia_tool_creative_tilling_does_not_damage_tool(GameTestHelper helper) {
       Player player = helper.makeMockPlayer(GameType.SURVIVAL);
       player.getAbilities().instabuild = true;
+      player.setShiftKeyDown(true);
       ItemStack redia = new ItemStack((ItemLike)EngineerToolsModule.REDIA_TOOL.get());
       helper.setBlock(TEST_POS, Blocks.DIRT);
       helper.setBlock(TEST_POS.above(), Blocks.AIR);
       ((Item)EngineerToolsModule.REDIA_TOOL.get()).useOn(context(helper, player, redia, TEST_POS, Direction.UP));
-      helper.assertTrue(helper.getBlockState(TEST_POS).is(Blocks.FARMLAND), "creative REDIA Tool should still till workable soil");
+      helper.assertTrue(helper.getBlockState(TEST_POS).is(Blocks.FARMLAND), "creative sneak-use REDIA Tool should still till workable soil");
       helper.assertValueEqual(0, redia.getDamageValue(), "creative REDIA Tool use should not damage the tool");
       helper.succeed();
    }
@@ -149,6 +164,7 @@ public final class EngineerToolsGameTests {
    @GameTest(template = "empty", timeoutTicks = 40)
    public static void redia_tool_rejects_unworkable_target_without_damage(GameTestHelper helper) {
       Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+      player.setShiftKeyDown(true);
       ItemStack redia = new ItemStack((ItemLike)EngineerToolsModule.REDIA_TOOL.get());
       helper.setBlock(TEST_POS, Blocks.STONE);
       ((Item)EngineerToolsModule.REDIA_TOOL.get()).useOn(context(helper, player, redia, TEST_POS, Direction.UP));
@@ -160,7 +176,6 @@ public final class EngineerToolsGameTests {
    @GameTest(template = "empty", timeoutTicks = 40)
    public static void redia_tool_places_torch_into_replaceable_blocks(GameTestHelper helper) {
       Player player = helper.makeMockPlayer(GameType.SURVIVAL);
-      player.setShiftKeyDown(true);
       ItemStack redia = new ItemStack((ItemLike)EngineerToolsModule.REDIA_TOOL.get());
       player.getInventory().items.set(1, new ItemStack(Items.TORCH));
       helper.setBlock(TEST_POS, Blocks.STONE);
@@ -168,7 +183,123 @@ public final class EngineerToolsGameTests {
       ((Item)EngineerToolsModule.REDIA_TOOL.get()).useOn(context(helper, player, redia, TEST_POS, Direction.NORTH));
       helper.assertTrue(helper.getBlockState(TEST_POS.north()).is(Blocks.WALL_TORCH), "REDIA Tool should replace short grass with a wall torch");
       helper.assertValueEqual(0, countItem(player.getInventory(), Items.TORCH), "REDIA Tool should consume one carried torch");
-      helper.assertValueEqual(1, redia.getDamageValue(), "REDIA Tool should wear after placing a torch");
+      helper.assertValueEqual(0, redia.getDamageValue(), "original REDIA torch placement should not damage the tool");
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 40)
+   public static void redia_tool_exposes_original_multitool_actions(GameTestHelper helper) {
+      ItemStack redia = new ItemStack((ItemLike)EngineerToolsModule.REDIA_TOOL.get());
+      helper.assertValueEqual(3000, redia.getMaxDamage(), "REDIA Tool should use the original 3000 durability");
+      helper.assertTrue(redia.canPerformAction(ItemAbilities.AXE_STRIP), "REDIA Tool should expose axe actions");
+      helper.assertTrue(redia.canPerformAction(ItemAbilities.PICKAXE_DIG), "REDIA Tool should expose pickaxe actions");
+      helper.assertTrue(redia.canPerformAction(ItemAbilities.SHOVEL_FLATTEN), "REDIA Tool should expose shovel actions");
+      helper.assertTrue(redia.canPerformAction(ItemAbilities.HOE_TILL), "REDIA Tool should expose hoe actions");
+      helper.assertTrue(redia.canPerformAction(ItemAbilities.SHEARS_DIG), "REDIA Tool should expose shears actions");
+      helper.assertTrue(redia.isCorrectToolForDrops(Blocks.DIAMOND_ORE.defaultBlockState()), "REDIA Tool should mine diamond-grade drops");
+      helper.assertTrue(redia.getDestroySpeed(Blocks.DIRT.defaultBlockState()) > 1.0F, "REDIA Tool should mine dirt faster than a hand");
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 40)
+   public static void redia_tool_sneak_cycles_original_ground_states(GameTestHelper helper) {
+      Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+      player.setShiftKeyDown(true);
+      ItemStack redia = new ItemStack((ItemLike)EngineerToolsModule.REDIA_TOOL.get());
+      helper.setBlock(TEST_POS, Blocks.DIRT);
+      helper.setBlock(TEST_POS.above(), Blocks.AIR);
+      ((Item)EngineerToolsModule.REDIA_TOOL.get()).useOn(context(helper, player, redia, TEST_POS, Direction.UP));
+      helper.assertTrue(helper.getBlockState(TEST_POS).is(Blocks.FARMLAND), "REDIA Tool should cycle dirt to farmland");
+      ((Item)EngineerToolsModule.REDIA_TOOL.get()).useOn(context(helper, player, redia, TEST_POS, Direction.UP));
+      helper.assertTrue(helper.getBlockState(TEST_POS).is(Blocks.COARSE_DIRT), "REDIA Tool should cycle farmland to coarse dirt");
+      ((Item)EngineerToolsModule.REDIA_TOOL.get()).useOn(context(helper, player, redia, TEST_POS, Direction.UP));
+      helper.assertTrue(helper.getBlockState(TEST_POS).is(Blocks.DIRT_PATH), "REDIA Tool should cycle coarse dirt to dirt path");
+      ((Item)EngineerToolsModule.REDIA_TOOL.get()).useOn(context(helper, player, redia, TEST_POS, Direction.UP));
+      helper.assertTrue(helper.getBlockState(TEST_POS).is(Blocks.DIRT), "REDIA Tool should cycle dirt path back to dirt");
+      helper.assertValueEqual(4, redia.getDamageValue(), "each successful ground cycle should damage the tool once");
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 40)
+   public static void redia_tool_sneak_snips_shearable_plants(GameTestHelper helper) {
+      Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+      player.setShiftKeyDown(true);
+      ItemStack redia = new ItemStack((ItemLike)EngineerToolsModule.REDIA_TOOL.get());
+      helper.setBlock(TEST_POS, Blocks.SHORT_GRASS);
+      ((Item)EngineerToolsModule.REDIA_TOOL.get()).useOn(context(helper, player, redia, TEST_POS, Direction.UP));
+      helper.assertTrue(helper.getBlockState(TEST_POS).isAir(), "REDIA Tool should snip shearable plants while sneaking");
+      helper.assertValueEqual(1, redia.getDamageValue(), "REDIA Tool should wear after snipping a plant");
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 40)
+   public static void redia_tool_shears_entities(GameTestHelper helper) {
+      Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+      ItemStack redia = new ItemStack((ItemLike)EngineerToolsModule.REDIA_TOOL.get());
+      Sheep sheep = (Sheep)EntityType.SHEEP.create(helper.getLevel());
+      helper.assertTrue(sheep != null, "sheep test target should be creatable");
+      BlockPos absolute = helper.absolutePos(TEST_POS);
+      sheep.setPos(absolute.getX() + 0.5, absolute.getY(), absolute.getZ() + 0.5);
+      helper.getLevel().addFreshEntity(sheep);
+      InteractionResult result = redia.getItem().interactLivingEntity(redia, player, sheep, InteractionHand.MAIN_HAND);
+      helper.assertTrue(result.consumesAction(), "REDIA Tool should shear a ready sheep");
+      helper.assertTrue(sheep.isSheared(), "REDIA Tool should apply sheep shearing state");
+      helper.assertValueEqual(1, redia.getDamageValue(), "REDIA Tool should wear after entity shearing");
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 40)
+   public static void redia_tool_safe_attack_cancels_protected_targets(GameTestHelper helper) {
+      Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+      ItemStack redia = new ItemStack((ItemLike)EngineerToolsModule.REDIA_TOOL.get());
+      Villager villager = (Villager)EntityType.VILLAGER.create(helper.getLevel());
+      ZombifiedPiglin piglin = (ZombifiedPiglin)EntityType.ZOMBIFIED_PIGLIN.create(helper.getLevel());
+      Pig pig = (Pig)EntityType.PIG.create(helper.getLevel());
+      helper.assertTrue(villager != null, "villager test target should be creatable");
+      helper.assertTrue(piglin != null, "zombified piglin test target should be creatable");
+      helper.assertTrue(pig != null, "pig test target should be creatable");
+      helper.assertTrue(redia.getItem().onLeftClickEntity(redia, player, villager), "REDIA Tool should cancel villager attacks");
+      helper.assertTrue(redia.getItem().onLeftClickEntity(redia, player, piglin), "REDIA Tool should cancel neutral zombified piglin attacks");
+      helper.assertFalse(redia.getItem().onLeftClickEntity(redia, player, pig), "REDIA Tool should allow normal passive target attacks");
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 40)
+   public static void redia_tool_sneak_break_fells_connected_logs(GameTestHelper helper) {
+      Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+      player.setShiftKeyDown(true);
+      ItemStack redia = new ItemStack((ItemLike)EngineerToolsModule.REDIA_TOOL.get());
+      player.setItemInHand(InteractionHand.MAIN_HAND, redia);
+      helper.setBlock(TEST_POS, Blocks.OAK_LOG);
+      helper.setBlock(TEST_POS.above(), Blocks.OAK_LOG);
+      helper.setBlock(TEST_POS.above(2), Blocks.OAK_LOG);
+      redia.getItem().mineBlock(redia, helper.getLevel(), Blocks.OAK_LOG.defaultBlockState(), helper.absolutePos(TEST_POS), player);
+      helper.assertTrue(helper.getBlockState(TEST_POS.above()).isAir(), "REDIA Tool should fell connected upper logs");
+      helper.assertTrue(helper.getBlockState(TEST_POS.above(2)).isAir(), "REDIA Tool should continue felling connected logs");
+      helper.assertTrue(redia.getDamageValue() > 1, "tree felling should add extra durability cost");
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 40)
+   public static void redia_tool_repairs_and_overrepairs_with_diamonds(GameTestHelper helper) {
+      RediaToolRepairRecipe recipe = new RediaToolRepairRecipe(CraftingBookCategory.EQUIPMENT);
+      ItemStack damaged = new ItemStack((ItemLike)EngineerToolsModule.REDIA_TOOL.get());
+      damaged.setDamageValue(2900);
+      CraftingInput repairInput = CraftingInput.of(2, 1, List.of(damaged, new ItemStack(Items.DIAMOND)));
+      helper.assertTrue(recipe.matches(repairInput, helper.getLevel()), "REDIA diamond repair recipe should match one tool and one diamond");
+      ItemStack repaired = recipe.assemble(repairInput, helper.getLevel().registryAccess());
+      helper.assertValueEqual(950, repaired.getDamageValue(), "REDIA diamond repair should restore 65 percent of max durability");
+
+      Holder<Enchantment> efficiency = helper.getLevel().registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.EFFICIENCY);
+      Holder<Enchantment> fortune = helper.getLevel().registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.FORTUNE);
+      ItemStack pristine = new ItemStack((ItemLike)EngineerToolsModule.REDIA_TOOL.get());
+      ItemStack overrepaired = recipe.assemble(CraftingInput.of(2, 1, List.of(pristine, new ItemStack(Items.DIAMOND))), helper.getLevel().registryAccess());
+      helper.assertValueEqual(2, EnchantmentHelper.getItemEnchantmentLevel(efficiency, overrepaired), "first over-repair should add Efficiency II");
+      helper.assertValueEqual(0, EnchantmentHelper.getItemEnchantmentLevel(fortune, overrepaired), "first over-repair should not add Fortune yet");
+      overrepaired = recipe.assemble(CraftingInput.of(2, 1, List.of(overrepaired, new ItemStack(Items.DIAMOND))), helper.getLevel().registryAccess());
+      helper.assertValueEqual(4, EnchantmentHelper.getItemEnchantmentLevel(efficiency, overrepaired), "second over-repair should cap Efficiency at IV");
+      overrepaired = recipe.assemble(CraftingInput.of(2, 1, List.of(overrepaired, new ItemStack(Items.DIAMOND))), helper.getLevel().registryAccess());
+      helper.assertValueEqual(2, EnchantmentHelper.getItemEnchantmentLevel(fortune, overrepaired), "third over-repair should begin Fortune progression");
       helper.succeed();
    }
 

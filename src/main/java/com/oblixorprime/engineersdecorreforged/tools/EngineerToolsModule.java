@@ -9,7 +9,7 @@ import net.neoforged.neoforge.registries.DeferredItem;
 
 public final class EngineerToolsModule {
    public static final DeferredItem<Item> REDIA_TOOL = ModItems.registerItem(
-      "redia_tool", () -> new RediaToolItem(new Properties().stacksTo(1).durability(1561).rarity(Rarity.RARE))
+      "redia_tool", () -> new RediaToolItem(new Properties().stacksTo(1).durability(RediaToolItem.MAX_DAMAGE).rarity(Rarity.UNCOMMON))
    );
    public static final DeferredItem<Item> CRUSHING_HAMMER = ModItems.registerItem(
       "crushing_hammer", () -> new CrushingHammerItem(new Properties().stacksTo(1).durability(640).rarity(Rarity.UNCOMMON))

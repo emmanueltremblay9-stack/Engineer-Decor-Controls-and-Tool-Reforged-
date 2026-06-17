@@ -2,6 +2,34 @@
 
 All notable reconstruction, repair, and validation changes for this project are recorded here.
 
+## [1.1.1-reconstructed] - 2026-06-17
+
+### Validation
+
+- Confirmed `compileJava` passes.
+- Confirmed `runGameTestServer` passes with all 139 required GameTests.
+- Confirmed `clean build` passes and produces `build/libs/engineers_decor_reforged-1.1.1-reconstructed.jar`.
+- Installed the rebuilt jar into the Prism `1.21.1 TesT LaB` instance with matching SHA-256 hashes.
+
+### Fixed
+
+- Reimplemented the REDIA Tool against the original MIT Engineer's Tools behavior:
+  - diamond-grade axe/pickaxe/shovel/hoe/shears capability exposure
+  - original 3000 durability
+  - normal-use torch placement from inventory without REDIA durability loss
+  - sneak-use plant snipping, ground cycling, and axe stripping
+  - sheep/entity shearing
+  - villager, owned-pet, and neutral zombified piglin safe-attack cancellation
+  - sneak-break connected log felling
+  - durability-dependent Efficiency/Fortune decay
+- Added the REDIA diamond repair/over-repair recipe and serializer so over-repair restores the original Efficiency/Fortune progression.
+- Synchronized user-visible mod version metadata to `1.1.1-reconstructed`.
+
+### Added
+
+- Added GameTest coverage for REDIA multi-tool actions, ground cycling, plant snipping, entity shearing, safe attack, tree felling, and diamond over-repair.
+- Added `install-mod.ps1` to reproducibly build/install the runtime jar and write `build/install-report.json`.
+
 ## [1.1-reconstructed] - 2026-06-17
 
 ### Validation
