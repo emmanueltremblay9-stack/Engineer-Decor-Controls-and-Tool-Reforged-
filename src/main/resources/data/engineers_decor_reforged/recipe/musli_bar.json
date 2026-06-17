@@ -3,7 +3,7 @@
   "category": "food",
   "ingredients": [
     {
-      "item": "minecraft:wheat_seeds"
+      "tag": "engineers_decor_reforged:musli_bar_press_seeds"
     },
     {
       "item": "minecraft:apple"

@@ -1,7 +1,10 @@
 package com.oblixorprime.engineersdecorreforged.tools;
 
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -16,6 +19,9 @@ import net.minecraft.world.level.Level;
 
 public class MusliBarPressItem extends TooltipItem {
    private static final int OUTPUT_COUNT = 4;
+   public static final TagKey<Item> ACCEPTED_SEEDS = TagKey.create(
+      Registries.ITEM, ResourceLocation.fromNamespaceAndPath("engineers_decor_reforged", "musli_bar_press_seeds")
+   );
 
    public MusliBarPressItem(Properties properties) {
       super("musli_bar_press", properties);
@@ -25,7 +31,7 @@ public class MusliBarPressItem extends TooltipItem {
       ItemStack press = player.getItemInHand(hand);
       Inventory inventory = player.getInventory();
       ItemStack output = new ItemStack((ItemLike)EngineerToolsModule.MUSLI_BAR.get(), 4);
-      if (player.getAbilities().instabuild || hasItem(inventory, Items.BREAD) && hasItem(inventory, Items.APPLE) && hasItem(inventory, Items.WHEAT_SEEDS)) {
+      if (player.getAbilities().instabuild || hasItem(inventory, Items.BREAD) && hasItem(inventory, Items.APPLE) && hasAcceptedSeed(inventory)) {
          if (!canFit(inventory, output, !player.getAbilities().instabuild)) {
             return fail(level, player, press, "item.engineers_decor_reforged.musli_bar_press.msg.full");
          }
@@ -34,7 +40,7 @@ public class MusliBarPressItem extends TooltipItem {
             if (!player.getAbilities().instabuild) {
                consumeOne(inventory, Items.BREAD);
                consumeOne(inventory, Items.APPLE);
-               consumeOne(inventory, Items.WHEAT_SEEDS);
+               consumeAcceptedSeed(inventory);
             }
 
             inventory.add(output);
@@ -62,10 +68,30 @@ public class MusliBarPressItem extends TooltipItem {
       return false;
    }
 
+   private static boolean hasAcceptedSeed(Inventory inventory) {
+      for (int i = 0; i < inventory.getContainerSize(); i++) {
+         if (inventory.getItem(i).is(ACCEPTED_SEEDS)) {
+            return true;
+         }
+      }
+
+      return false;
+   }
+
    private static void consumeOne(Inventory inventory, Item item) {
       for (int i = 0; i < inventory.getContainerSize(); i++) {
          ItemStack stack = inventory.getItem(i);
          if (stack.is(item)) {
+            stack.shrink(1);
+            return;
+         }
+      }
+   }
+
+   private static void consumeAcceptedSeed(Inventory inventory) {
+      for (int i = 0; i < inventory.getContainerSize(); i++) {
+         ItemStack stack = inventory.getItem(i);
+         if (stack.is(ACCEPTED_SEEDS)) {
             stack.shrink(1);
             return;
          }
@@ -104,7 +130,7 @@ public class MusliBarPressItem extends TooltipItem {
       } else if (ingredients[1] > 0 && stack.is(Items.APPLE)) {
          ingredients[1]--;
          return count - 1;
-      } else if (ingredients[2] > 0 && stack.is(Items.WHEAT_SEEDS)) {
+      } else if (ingredients[2] > 0 && stack.is(ACCEPTED_SEEDS)) {
          ingredients[2]--;
          return count - 1;
       } else {

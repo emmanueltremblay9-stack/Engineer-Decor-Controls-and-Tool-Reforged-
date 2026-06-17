@@ -11,7 +11,7 @@
       "item": "minecraft:iron_ingot"
     },
     "S": {
-      "item": "minecraft:wheat_seeds"
+      "tag": "engineers_decor_reforged:musli_bar_press_seeds"
     },
     "F": {
       "item": "minecraft:apple"

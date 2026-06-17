@@ -2,6 +2,28 @@
 
 All notable reconstruction, repair, and validation changes for this project are recorded here.
 
+## [1.1.8-reconstructed] - 2026-06-17
+
+### Validation
+
+- Confirmed `runGameTestServer` passes with all 146 required GameTests.
+- Confirmed `clean build` passes and produces `build/libs/engineers_decor_reforged-1.1.8-reconstructed.jar`.
+- Installed the rebuilt jar into the Prism `1.21.1 TesT LaB` instance with matching SHA-256 hashes.
+
+### Fixed
+
+- Restored Muslee Bar Press seed parity from Engineer's Tools metadata and readme:
+  - Inventory use now accepts wheat, melon, pumpkin, and beetroot seeds instead of wheat seeds only.
+  - The Muslee Bar shapeless recipe and Muslee Bar Press shaped recipe now share the same accepted-seed item tag.
+  - Output-space simulation now treats any accepted seed as the consumed seed slot, preserving the atomic no-loss behavior for full inventories.
+- Updated Muslee Bar Press tooltip and manual text so the documented seed options match runtime behavior.
+- Synchronized user-visible mod version metadata to `1.1.8-reconstructed`.
+
+### Added
+
+- Added the `engineers_decor_reforged:musli_bar_press_seeds` item tag.
+- Added GameTest coverage for melon, pumpkin, and beetroot seed press use.
+
 ## [1.1.7-reconstructed] - 2026-06-17
 
 ### Validation

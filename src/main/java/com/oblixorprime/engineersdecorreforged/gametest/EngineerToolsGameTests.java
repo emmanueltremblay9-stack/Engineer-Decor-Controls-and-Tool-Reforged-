@@ -4,6 +4,7 @@ import com.oblixorprime.engineersdecorreforged.ModBlocks;
 import com.oblixorprime.engineersdecorreforged.block.PortedBlocks;
 import com.oblixorprime.engineersdecorreforged.tools.EngineerToolsModule;
 import com.oblixorprime.engineersdecorreforged.tools.MaterialBoxItem;
+import com.oblixorprime.engineersdecorreforged.tools.MusliBarPressItem;
 import com.oblixorprime.engineersdecorreforged.tools.RediaToolRepairRecipe;
 import com.oblixorprime.engineersdecorreforged.tools.TooltipItem;
 import java.util.ArrayList;
@@ -570,6 +571,14 @@ public final class EngineerToolsGameTests {
    }
 
    @GameTest(template = "empty", timeoutTicks = 40)
+   public static void musli_bar_press_accepts_original_seed_variants(GameTestHelper helper) {
+      assertMusliSeedAccepted(helper, Items.MELON_SEEDS);
+      assertMusliSeedAccepted(helper, Items.PUMPKIN_SEEDS);
+      assertMusliSeedAccepted(helper, Items.BEETROOT_SEEDS);
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 40)
    public static void musli_bar_press_missing_ingredient_consumes_nothing(GameTestHelper helper) {
       Player player = helper.makeMockPlayer(GameType.SURVIVAL);
       ItemStack press = new ItemStack((ItemLike)EngineerToolsModule.MUSLI_BAR_PRESS.get());
@@ -696,6 +705,20 @@ public final class EngineerToolsGameTests {
       }
 
       return count;
+   }
+
+   private static void assertMusliSeedAccepted(GameTestHelper helper, Item seed) {
+      Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+      ItemStack press = new ItemStack((ItemLike)EngineerToolsModule.MUSLI_BAR_PRESS.get());
+      player.setItemInHand(InteractionHand.MAIN_HAND, press);
+      player.getInventory().add(new ItemStack(Items.BREAD));
+      player.getInventory().add(new ItemStack(Items.APPLE));
+      player.getInventory().add(new ItemStack(seed));
+      helper.assertTrue(new ItemStack(seed).is(MusliBarPressItem.ACCEPTED_SEEDS), seed + " should be in the Muslee Press accepted seed tag");
+      press.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
+      helper.assertValueEqual(4, countItem(player.getInventory(), (Item)EngineerToolsModule.MUSLI_BAR.get()), seed + " should press into four Muslee bars");
+      helper.assertValueEqual(0, countItem(player.getInventory(), seed), seed + " should be consumed as the seed ingredient");
+      helper.assertValueEqual(1, press.getDamageValue(), "press should wear after using " + seed);
    }
 
    private static void fillMainInventory(Inventory inventory, Item item) {
