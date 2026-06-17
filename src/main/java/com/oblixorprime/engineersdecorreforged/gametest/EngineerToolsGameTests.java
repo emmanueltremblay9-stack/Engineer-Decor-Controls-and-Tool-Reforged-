@@ -5,6 +5,8 @@ import com.oblixorprime.engineersdecorreforged.block.PortedBlocks;
 import com.oblixorprime.engineersdecorreforged.tools.EngineerToolsModule;
 import com.oblixorprime.engineersdecorreforged.tools.MaterialBoxItem;
 import com.oblixorprime.engineersdecorreforged.tools.TooltipItem;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
@@ -21,6 +23,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.Item.TooltipContext;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.GameType;
@@ -217,6 +221,20 @@ public final class EngineerToolsGameTests {
       helper.getLevel().setDayTime(1000L);
       bag.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
       helper.assertValueEqual(0, bag.getDamageValue(), "daytime sleeping bag use should not damage the item");
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 40)
+   public static void tracker_tooltip_ignores_incomplete_saved_target_data(GameTestHelper helper) {
+      ItemStack tracker = new ItemStack((ItemLike)EngineerToolsModule.TRACKER.get());
+      CompoundTag incomplete = new CompoundTag();
+      incomplete.putString("target_dimension", helper.getLevel().dimension().location().toString());
+      tracker.set(DataComponents.CUSTOM_DATA, CustomData.of(incomplete));
+      List<Component> tooltip = new ArrayList<>();
+      tracker.getItem().appendHoverText(tracker, TooltipContext.of(helper.getLevel()), tooltip, TooltipFlag.NORMAL);
+      helper.assertFalse(
+         tooltip.stream().anyMatch(line -> line.getString().contains("Location:")), "tracker should not show a location when coordinate data is incomplete"
+      );
       helper.succeed();
    }
 

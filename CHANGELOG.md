@@ -2,14 +2,14 @@
 
 All notable reconstruction, repair, and validation changes for this project are recorded here.
 
-## [1.1-reconstructed] - 2026-06-16
+## [1.1-reconstructed] - 2026-06-17
 
 ### Validation
 
 - Confirmed `compileJava` passes.
-- Confirmed `runGameTestServer` passes with all 129 required GameTests.
+- Confirmed `runGameTestServer` passes with all 131 required GameTests.
 - Confirmed `build` passes and produces `build/libs/engineers_decor_reforged-1.1-reconstructed.jar`.
-- Latest rebuilt jar observed locally: `2,446,493` bytes, updated `2026-06-17 12:15:46 AM`.
+- Latest rebuilt jar observed locally: `2,449,306` bytes, updated `2026-06-17 1:04:23 AM`.
 
 ### Added
 
@@ -32,6 +32,8 @@ All notable reconstruction, repair, and validation changes for this project are 
   - REDIA Tool torch placement into replaceable blocks
   - GameTest fixture spacing for larger multi-block tests
   - metal sliding door hitboxes matching the visible closed/open models
+  - machine menu progress meters reporting normalized percentages
+  - tracker tooltips ignoring incomplete saved target data
 
 ### Fixed
 
@@ -63,6 +65,9 @@ All notable reconstruction, repair, and validation changes for this project are 
 - Added valid backing support to pulse-control GameTest fixtures.
 - Enlarged the shared blank GameTest structure footprint to 8x8x16 so multi-block fixtures are spaced correctly.
 - Replaced the metal sliding door's vanilla hinged-door shape with model-aligned sliding-door shapes for closed and open states.
+- Normalized machine menu progress reporting for lab furnaces, electrical furnaces, temperature machines, and block breakers.
+- Synced Small Block Breaker process totals through menu data so progress percentages use the real configured work time.
+- Suppressed Tracker location tooltips when saved target custom data has a dimension but incomplete coordinates.
 
 ### Repository
 
@@ -70,6 +75,7 @@ All notable reconstruction, repair, and validation changes for this project are 
 - Published machine/control/tool regression repairs in commit `abda90c`.
 - Published REDIA Tool and pulse-control fixture repairs in commit `78489ce`.
 - Published factory hopper pulse collection and GameTest footprint repairs in commit `838a0cb`.
+- Published mod logo asset in commit `489efa6`.
 
 ### Known Follow-Up
 

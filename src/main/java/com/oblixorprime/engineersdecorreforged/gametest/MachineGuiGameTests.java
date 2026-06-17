@@ -505,6 +505,19 @@ public final class MachineGuiGameTests {
    }
 
    @GameTest(template = "empty", timeoutTicks = 80)
+   public static void machine_menus_report_normalized_progress_percentages(GameTestHelper helper) {
+      Player player = helper.makeMockPlayer(GameType.CREATIVE);
+      assertMenuProgress(helper, player, TEST_POS, ModBlocks.SMALL_LAB_FURNACE, MachineKind.SMALL_LAB_FURNACE, 50, 200, 25);
+      assertMenuProgress(
+         helper, player, TEST_POS.offset(2, 0, 0), ModBlocks.SMALL_ELECTRICAL_FURNACE, MachineKind.SMALL_ELECTRICAL_FURNACE, 75, 150, 50
+      );
+      assertMenuProgress(helper, player, TEST_POS.offset(4, 0, 0), ModBlocks.SMALL_MINERAL_SMELTER, MachineKind.SMALL_MINERAL_SMELTER, 90, 180, 50);
+      assertMenuProgress(helper, player, TEST_POS.offset(6, 0, 0), ModBlocks.SMALL_FREEZER, MachineKind.SMALL_FREEZER, 45, 180, 25);
+      assertMenuProgress(helper, player, TEST_POS.offset(8, 0, 0), ModBlocks.SMALL_BLOCK_BREAKER, MachineKind.SMALL_BLOCK_BREAKER, 20, 80, 25);
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 80)
    public static void small_solar_panel_updates_comparator_after_fe_extraction(GameTestHelper helper) {
       MachineBlockEntity machine = placeMachine(helper, ModBlocks.SMALL_SOLAR_PANEL, MachineKind.SMALL_SOLAR_PANEL);
       machine.dataAccessForTests().set(3, 640);
@@ -1859,6 +1872,35 @@ public final class MachineGuiGameTests {
       helper.assertValueEqual(storedEnergy, energyStorage.receiveEnergy(storedEnergy, false), kind.registryName() + " test setup should charge FE storage");
       MachineMenu menu = new MachineMenu(kind, 1, player.getInventory(), machine, machine.dataAccessForTests());
       helper.assertValueEqual(storedEnergy, menu.energyStored(), kind.registryName() + " menu should expose its synced stored FE");
+      menu.removed(player);
+   }
+
+   private static void assertMenuProgress(
+      GameTestHelper helper,
+      Player player,
+      BlockPos pos,
+      DeferredBlock<? extends MachineBlocks.MachineBlock> block,
+      MachineKind kind,
+      int elapsed,
+      int total,
+      int expectedPercent
+   ) {
+      MachineBlockEntity machine = placeMachineAt(helper, pos, block, kind);
+      MachineMenu menu = new MachineMenu(kind, 1, player.getInventory(), machine, machine.dataAccessForTests());
+      switch (kind) {
+         case SMALL_LAB_FURNACE, SMALL_ELECTRICAL_FURNACE -> {
+            machine.dataAccessForTests().set(2, elapsed);
+            machine.dataAccessForTests().set(3, total);
+         }
+         case SMALL_BLOCK_BREAKER -> {
+            machine.dataAccessForTests().set(1, elapsed);
+            machine.dataAccessForTests().set(3, total);
+         }
+         case SMALL_MINERAL_SMELTER, SMALL_FREEZER -> machine.dataAccessForTests().set(1, elapsed);
+         default -> throw new IllegalArgumentException("Unsupported progress test kind " + kind);
+      }
+
+      helper.assertValueEqual(expectedPercent, menu.progress(), kind.registryName() + " menu should report normalized progress percent");
       menu.removed(player);
    }
 

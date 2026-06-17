@@ -933,6 +933,22 @@ public class MachineBlockEntity extends BaseContainerBlockEntity {
                   yield 0;
             }
          }
+         case SMALL_BLOCK_BREAKER -> {
+            switch (index) {
+               case 0:
+                  yield kind.ordinal();
+               case 1:
+                  yield this.progress;
+               case 3:
+                  yield this.processTimeNeeded;
+               case 4:
+                  yield this.comparatorOutput();
+               case 5:
+                  yield this.cooldown;
+               default:
+                  yield 0;
+            }
+         }
          default -> {
             switch (index) {
                case 0:
@@ -1086,7 +1102,6 @@ public class MachineBlockEntity extends BaseContainerBlockEntity {
                   default:
                      return;
                }
-            case SMALL_BLOCK_BREAKER:
             case SMALL_TREE_CUTTER:
             case SMALL_WASTE_INCINERATOR:
             default:
@@ -1105,6 +1120,20 @@ public class MachineBlockEntity extends BaseContainerBlockEntity {
                      return;
                   case 5:
                      this.cooldown = value;
+                     return;
+               }
+            case SMALL_BLOCK_BREAKER:
+               switch (index) {
+                  case 1:
+                     this.progress = value;
+                     return;
+                  case 3:
+                     this.processTimeNeeded = Math.max(0, value);
+                     return;
+                  case 5:
+                     this.cooldown = value;
+                     return;
+                  default:
                      return;
                }
             case SMALL_LAB_FURNACE:

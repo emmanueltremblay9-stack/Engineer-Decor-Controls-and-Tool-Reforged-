@@ -35,6 +35,7 @@ public class MachineMenu extends AbstractContainerMenu {
    private static final int COMPACT_MACHINE_ENERGY_CAPACITY = 16000;
    private static final int DEFAULT_FLUID_CAPACITY = 4000;
    private static final int SMALL_FLUID_FUNNEL_CAPACITY = 3000;
+   private static final int TEMPERATURE_PROCESS_TICKS = 180;
    private static final String IE_NAMESPACE = "immersiveengineering";
    private static final TagKey<Item> IE_HAMMERS = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("immersiveengineering", "tools/hammers"));
    private static final int METAL_TABLE_HAMMER = 0;
@@ -101,7 +102,12 @@ public class MachineMenu extends AbstractContainerMenu {
    }
 
    public int progress() {
-      return this.data.get(1);
+      return switch (this.kind) {
+         case SMALL_LAB_FURNACE, SMALL_ELECTRICAL_FURNACE -> scaledProgress(this.data.get(2), this.data.get(3));
+         case SMALL_BLOCK_BREAKER -> scaledProgress(this.data.get(1), this.data.get(3));
+         case SMALL_MINERAL_SMELTER, SMALL_FREEZER -> scaledProgress(this.data.get(1), TEMPERATURE_PROCESS_TICKS);
+         default -> clampPercent(this.data.get(1));
+      };
    }
 
    public int fluidAmount() {
@@ -305,6 +311,14 @@ public class MachineMenu extends AbstractContainerMenu {
       }
 
       return -1;
+   }
+
+   private static int scaledProgress(int elapsed, int total) {
+      return total > 0 && elapsed > 0 ? clampPercent((int)((long)elapsed * 100L / (long)total)) : 0;
+   }
+
+   private static int clampPercent(int value) {
+      return Math.max(0, Math.min(100, value));
    }
 
    private boolean isSmeltable(Player player, ItemStack stack) {

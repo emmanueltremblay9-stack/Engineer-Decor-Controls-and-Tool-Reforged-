@@ -68,8 +68,8 @@ public class TrackerItem extends TooltipItem {
    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
       super.appendHoverText(stack, context, tooltip, flag);
       CompoundTag tag = ((CustomData)stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY)).copyTag();
-      ResourceLocation dimension = ResourceLocation.tryParse(tag.getString("target_dimension"));
-      if (dimension != null) {
+      ResourceLocation dimension = targetDimension(tag);
+      if (dimension != null && hasCompleteTarget(tag)) {
          tooltip.add(
             Component.translatable(
                   "item.engineers_decor_reforged.tracker.tip.target.location",
@@ -79,5 +79,13 @@ public class TrackerItem extends TooltipItem {
          );
          tooltip.add(Component.literal(dimension.toString().replace("engineers_decor_reforged:", "")).withStyle(ChatFormatting.DARK_AQUA));
       }
+   }
+
+   private static ResourceLocation targetDimension(CompoundTag tag) {
+      return tag.contains(TAG_DIMENSION) ? ResourceLocation.tryParse(tag.getString(TAG_DIMENSION)) : null;
+   }
+
+   private static boolean hasCompleteTarget(CompoundTag tag) {
+      return tag.contains(TAG_DIMENSION) && tag.contains(TAG_X) && tag.contains(TAG_Y) && tag.contains(TAG_Z);
    }
 }
