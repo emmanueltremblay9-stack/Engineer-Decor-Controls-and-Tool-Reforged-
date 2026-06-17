@@ -9,12 +9,13 @@ All notable reconstruction, repair, and validation changes for this project are 
 - Confirmed `compileJava` passes.
 - Confirmed `runGameTestServer` passes with all 129 required GameTests.
 - Confirmed `build` passes and produces `build/libs/engineers_decor_reforged-1.1-reconstructed.jar`.
-- Latest rebuilt jar observed locally: `2,322,252` bytes, updated `2026-06-16 11:18:26 PM`.
+- Latest rebuilt jar observed locally: `2,446,493` bytes, updated `2026-06-17 12:15:46 AM`.
 
 ### Added
 
 - Reconstructed a NeoForge 1.21.1 Gradle source project from the published `engineers_decor_reforged-1.1.jar`.
 - Restored recovered resources, Gradle wrapper files, mod metadata, recipes, loot tables, models, blockstates, language files, and manual assets.
+- Added the project logo as the root `pack.png` asset and NeoForge mod-list `logoFile`.
 - Added GameTest coverage for machine menus, automation transfer, machine save/load normalization, fluid handlers, redstone controls, accessway blocks, and selected tool behavior.
 - Added regression coverage for:
   - attached redstone controls dropping when backing support is removed
