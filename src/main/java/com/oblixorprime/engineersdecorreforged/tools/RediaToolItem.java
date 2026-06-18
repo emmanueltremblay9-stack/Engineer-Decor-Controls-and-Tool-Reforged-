@@ -52,8 +52,8 @@ import net.neoforged.neoforge.common.ItemAbility;
 public class RediaToolItem extends TooltipItem {
    public static final int MAX_DAMAGE = 3000;
    private static final float MINING_SPEED = Tiers.DIAMOND.getSpeed();
-   private static final int[] EFFICIENCY_DECAY = new int[]{0, 0, 1, 1, 2, 2, 3, 3, 3, 4};
-   private static final int[] FORTUNE_DECAY = new int[]{0, 0, 0, 0, 0, 0, 1, 1, 2, 3};
+   private static final int[] EFFICIENCY_DECAY = new int[]{0, 1, 1, 2, 2, 3, 3, 3, 3, 4};
+   private static final int[] FORTUNE_DECAY = new int[]{0, 0, 0, 0, 1, 1, 1, 1, 2, 3};
    private static final List<BlockPos> HORIZONTAL_OFFSETS = List.of(
       new BlockPos(1, 0, 0),
       new BlockPos(1, 0, 1),

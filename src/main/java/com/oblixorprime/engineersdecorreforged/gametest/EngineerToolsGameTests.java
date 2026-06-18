@@ -5,8 +5,10 @@ import com.oblixorprime.engineersdecorreforged.block.PortedBlocks;
 import com.oblixorprime.engineersdecorreforged.tools.EngineerToolsModule;
 import com.oblixorprime.engineersdecorreforged.tools.MaterialBoxItem;
 import com.oblixorprime.engineersdecorreforged.tools.MusliBarPressItem;
+import com.oblixorprime.engineersdecorreforged.tools.RediaToolItem;
 import com.oblixorprime.engineersdecorreforged.tools.RediaToolRepairRecipe;
 import com.oblixorprime.engineersdecorreforged.tools.TooltipItem;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -228,6 +230,21 @@ public final class EngineerToolsGameTests {
       helper.assertTrue(redia.canPerformAction(ItemAbilities.SHEARS_DIG), "REDIA Tool should expose shears actions");
       helper.assertTrue(redia.isCorrectToolForDrops(Blocks.DIAMOND_ORE.defaultBlockState()), "REDIA Tool should mine diamond-grade drops");
       helper.assertTrue(redia.getDestroySpeed(Blocks.DIRT.defaultBlockState()) > 1.0F, "REDIA Tool should mine dirt faster than a hand");
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 40)
+   public static void redia_tool_uses_original_enchantment_decay_curves(GameTestHelper helper) {
+      ItemStack redia = new ItemStack((ItemLike)EngineerToolsModule.REDIA_TOOL.get());
+      redia.setDamageValue(2700);
+      helper.assertValueEqual(1, invokeRediaCurve("durabilityDependentEfficiency", redia), "REDIA Tool should allow Efficiency I at 10 percent durability");
+      helper.assertValueEqual(0, invokeRediaCurve("durabilityDependentFortune", redia), "REDIA Tool should not allow Fortune below 40 percent durability");
+      redia.setDamageValue(1800);
+      helper.assertValueEqual(2, invokeRediaCurve("durabilityDependentEfficiency", redia), "REDIA Tool should allow Efficiency II at 40 percent durability");
+      helper.assertValueEqual(1, invokeRediaCurve("durabilityDependentFortune", redia), "REDIA Tool should allow Fortune I at 40 percent durability");
+      redia.setDamageValue(300);
+      helper.assertValueEqual(4, invokeRediaCurve("durabilityDependentEfficiency", redia), "REDIA Tool should allow Efficiency IV near full durability");
+      helper.assertValueEqual(3, invokeRediaCurve("durabilityDependentFortune", redia), "REDIA Tool should allow Fortune III near full durability");
       helper.succeed();
    }
 
@@ -707,6 +724,16 @@ public final class EngineerToolsGameTests {
       }
 
       return count;
+   }
+
+   private static int invokeRediaCurve(String methodName, ItemStack stack) {
+      try {
+         Method method = RediaToolItem.class.getDeclaredMethod(methodName, ItemStack.class);
+         method.setAccessible(true);
+         return (Integer)method.invoke(null, stack);
+      } catch (ReflectiveOperationException exception) {
+         throw new AssertionError("Could not invoke REDIA durability curve helper " + methodName, exception);
+      }
    }
 
    private static void assertMusliSeedAccepted(GameTestHelper helper, Item seed) {

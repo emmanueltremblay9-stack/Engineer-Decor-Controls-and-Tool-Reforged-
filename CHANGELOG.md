@@ -2,6 +2,24 @@
 
 All notable reconstruction, repair, and validation changes for this project are recorded here.
 
+## [1.1.11-reconstructed] - 2026-06-18
+
+### Validation
+
+- Confirmed `runGameTestServer` passes with all 148 required GameTests.
+- Confirmed `clean build` passes and produces `build/libs/engineers_decor_reforged-1.1.11-reconstructed.jar`.
+- Confirmed the rebuilt jar contains the restored REDIA Tool 3D item model, texture, REDIA tool class, and metadata version `1.1.11-reconstructed`.
+
+### Fixed
+
+- Restored the original MIT Engineer's Tools REDIA Tool 3D item model instead of using the flat generated item model.
+- Corrected REDIA Tool durability-based Efficiency and Fortune decay curves to the effective original 1.16 config defaults.
+- Synchronized user-visible mod version metadata to `1.1.11-reconstructed`.
+
+### Added
+
+- Added GameTest coverage for REDIA Tool durability-dependent Efficiency/Fortune curve thresholds.
+
 ## [1.1.10-reconstructed] - 2026-06-17
 
 ### Validation
