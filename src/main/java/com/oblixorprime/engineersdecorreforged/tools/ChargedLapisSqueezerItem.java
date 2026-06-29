@@ -26,18 +26,18 @@ public class ChargedLapisSqueezerItem extends TooltipItem {
       }
 
       if (player.experienceLevel < 1) {
-         message(player, "item.engineers_decor_reforged.charged_lapis_squeezer.msg.noxp");
+         message(player, "item.immersive_engineer_decor_controls_tool_reforged.charged_lapis_squeezer.msg.noxp");
          return InteractionResultHolder.fail(stack);
       }
 
       if (player.getHealth() <= player.getMaxHealth() / 10.0F) {
-         message(player, "item.engineers_decor_reforged.charged_lapis_squeezer.msg.lowhealth");
+         message(player, "item.immersive_engineer_decor_controls_tool_reforged.charged_lapis_squeezer.msg.lowhealth");
          return InteractionResultHolder.fail(stack);
       }
 
       ItemStack lapis = findLapis(player.getInventory());
       if (lapis.isEmpty()) {
-         message(player, "item.engineers_decor_reforged.charged_lapis_squeezer.msg.nolapis");
+         message(player, "item.immersive_engineer_decor_controls_tool_reforged.charged_lapis_squeezer.msg.nolapis");
          return InteractionResultHolder.fail(stack);
       }
 

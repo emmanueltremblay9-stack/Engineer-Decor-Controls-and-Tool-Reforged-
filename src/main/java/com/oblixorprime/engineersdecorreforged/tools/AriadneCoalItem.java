@@ -40,15 +40,17 @@ public class AriadneCoalItem extends TooltipItem {
          if (!level.isClientSide) {
             level.setBlock(placePos, marker, 11);
             ItemStack stack = context.getItemInHand();
-            stack.setDamageValue(stack.getDamageValue() + 1);
-            if (stack.getDamageValue() >= stack.getMaxDamage()) {
-               player.setItemInHand(context.getHand(), ItemStack.EMPTY);
-               level.playSound(null, placePos, SoundEvents.WOOD_BREAK, player.getSoundSource(), 0.4F, 2.0F);
-            } else {
-               level.playSound(null, placePos, SoundEvents.GRAVEL_HIT, player.getSoundSource(), 0.4F, 2.0F);
+            boolean broke = false;
+            if (!player.getAbilities().instabuild) {
+               stack.setDamageValue(stack.getDamageValue() + 1);
+               if (stack.getDamageValue() >= stack.getMaxDamage()) {
+                  player.setItemInHand(context.getHand(), ItemStack.EMPTY);
+                  broke = true;
+               }
             }
 
-            player.displayClientMessage(Component.translatable("item.engineers_decor_reforged.ariadne_coal.msg.placed"), true);
+            level.playSound(null, placePos, broke ? SoundEvents.WOOD_BREAK : SoundEvents.GRAVEL_HIT, player.getSoundSource(), 0.4F, 2.0F);
+            player.displayClientMessage(Component.translatable("item.immersive_engineer_decor_controls_tool_reforged.ariadne_coal.msg.placed"), true);
          }
 
          return InteractionResult.SUCCESS;
@@ -59,7 +61,7 @@ public class AriadneCoalItem extends TooltipItem {
 
    private static InteractionResult fail(Level level, Player player) {
       if (!level.isClientSide) {
-         player.displayClientMessage(Component.translatable("item.engineers_decor_reforged.ariadne_coal.msg.badtarget"), true);
+         player.displayClientMessage(Component.translatable("item.immersive_engineer_decor_controls_tool_reforged.ariadne_coal.msg.badtarget"), true);
       }
 
       return InteractionResult.FAIL;

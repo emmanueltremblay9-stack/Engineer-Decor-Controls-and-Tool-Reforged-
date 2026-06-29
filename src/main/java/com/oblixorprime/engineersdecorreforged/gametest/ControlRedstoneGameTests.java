@@ -6,9 +6,11 @@ import com.oblixorprime.engineersdecorreforged.rsgauges.SwitchLinkPearlItem;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Container;
@@ -21,11 +23,13 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.Item.TooltipContext;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.RepeaterBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
@@ -35,7 +39,7 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.registries.DeferredBlock;
 
-@GameTestHolder("engineers_decor_reforged")
+@GameTestHolder("immersive_engineer_decor_controls_tool_reforged")
 @PrefixGameTestTemplate(false)
 public final class ControlRedstoneGameTests {
    private static final String TEMPLATE = "empty";
@@ -117,10 +121,29 @@ public final class ControlRedstoneGameTests {
          .setValue(ControlsBlockTypes.POWERED, false);
       assertThinFullPanel(helper, contactMat, "industrial contact mat");
       assertTopPanel(helper, trapdoorClosed, "industrial high sensitive trapdoor");
-      assertEmptyCollision(helper, trapdoorOpen, "powered trapdoor should be open/non-blocking");
+      assertOpenTrapdoorPanel(helper, trapdoorOpen, "powered trapdoor");
       assertEmptyCollision(helper, fallthroughFrame, "fall-through detector should not block entities");
       assertPlantShape(helper, powerPlant, "red power plant");
       assertEmptyCollision(helper, powerPlant, "red power plant should not block movement");
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 40)
+   public static void floor_contact_controls_reject_wall_and_ceiling_placement(GameTestHelper helper) {
+      Player player = helper.makeMockPlayer(GameType.CREATIVE);
+      helper.setBlock(TEST_POS.below(), Blocks.STONE.defaultBlockState());
+      helper.setBlock(TEST_POS.west(), Blocks.STONE.defaultBlockState());
+      helper.setBlock(TEST_POS.above(), Blocks.STONE.defaultBlockState());
+
+      for (String name : List.of("industrial_contact_mat", "industrial_high_sensitive_trapdoor", "industrial_fallthrough_detector", "red_power_plant")) {
+         Block block = control(name);
+         BlockState floorState = placementState(helper, player, block, TEST_POS.below(), Direction.UP);
+         helper.assertTrue(floorState != null, name + " should place from the top face of a floor support");
+         helper.assertTrue(floorState.getValue(ControlsBlockTypes.FACING) == Direction.UP, name + " should keep floor-facing collision when floor placed");
+         helper.assertTrue(placementState(helper, player, block, TEST_POS.west(), Direction.EAST) == null, name + " should reject wall placement");
+         helper.assertTrue(placementState(helper, player, block, TEST_POS.above(), Direction.DOWN) == null, name + " should reject ceiling placement");
+      }
+
       helper.succeed();
    }
 
@@ -205,6 +228,27 @@ public final class ControlRedstoneGameTests {
    }
 
    @GameTest(template = "empty", timeoutTicks = 80)
+   public static void floor_mounted_dimmer_uses_panel_axis_for_output_strength(GameTestHelper helper) {
+      Player player = helper.makeMockPlayer(GameType.CREATIVE);
+      Block dimmer = control("industrial_dimmer");
+      helper.setBlock(
+         TEST_POS,
+         (BlockState)((BlockState)((BlockState)dimmer.defaultBlockState().setValue(ControlsBlockTypes.FACING, Direction.UP))
+               .setValue(ControlsBlockTypes.POWERED, true))
+            .setValue(ControlsBlockTypes.POWER, 8)
+      );
+      useBlockAt(helper, player, TEST_POS, Direction.UP, 0.5, 0.125, 0.05);
+      helper.assertBlockProperty(TEST_POS, ControlsBlockTypes.POWERED, false);
+      helper.assertBlockProperty(TEST_POS, ControlsBlockTypes.POWER, 0);
+      helper.assertValueEqual(0, signal(helper), "floor-mounted dimmer should reach low output from a low panel-axis click");
+      useBlockAt(helper, player, TEST_POS, Direction.UP, 0.5, 0.125, 0.95);
+      helper.assertBlockProperty(TEST_POS, ControlsBlockTypes.POWERED, true);
+      helper.assertBlockProperty(TEST_POS, ControlsBlockTypes.POWER, 15);
+      helper.assertValueEqual(15, signal(helper), "floor-mounted dimmer should reach full output from a high panel-axis click");
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 80)
    public static void comparator_switch_follows_attached_inventory_signal(GameTestHelper helper) {
       Block comparatorSwitch = control("industrial_comparator_switch");
       BlockPos switchPos = TEST_POS;
@@ -245,6 +289,33 @@ public final class ControlRedstoneGameTests {
             15,
             signal(helper, switchPos),
             "industrial comparator switch should emit when its attached block receives indirect redstone power"
+         );
+      });
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 80)
+   public static void comparator_switch_reads_directional_power_received_by_attached_block(GameTestHelper helper) {
+      Block comparatorSwitch = control("industrial_comparator_switch");
+      BlockPos switchPos = TEST_POS;
+      BlockPos backingPos = switchPos.west();
+      BlockPos repeaterPos = backingPos.west();
+      helper.setBlock(backingPos, Blocks.STONE.defaultBlockState());
+      helper.setBlock(
+         switchPos,
+         (BlockState)((BlockState)comparatorSwitch.defaultBlockState().setValue(ControlsBlockTypes.FACING, Direction.EAST))
+            .setValue(ControlsBlockTypes.POWERED, false)
+      );
+      helper.setBlock(
+         repeaterPos,
+         (BlockState)((BlockState)Blocks.REPEATER.defaultBlockState().setValue(RepeaterBlock.FACING, Direction.EAST))
+            .setValue(RepeaterBlock.POWERED, true)
+      );
+      helper.succeedWhen(() -> {
+         helper.assertBlockProperty(switchPos, ControlsBlockTypes.POWERED, true);
+         helper.assertValueEqual(
+            15,
+            signal(helper, switchPos),
+            "industrial comparator switch should emit when directional redstone powers its attached block"
          );
       });
    }
@@ -364,6 +435,32 @@ public final class ControlRedstoneGameTests {
       List<Component> tooltip = new ArrayList<>();
       linkedPearl.getItem().appendHoverText(linkedPearl, TooltipContext.of(helper.getLevel()), tooltip, TooltipFlag.NORMAL);
       helper.assertTrue(tooltip.size() >= 2, "linked Switch Link Pearl tooltip should include target name and coordinates");
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 40)
+   public static void switchlink_pearl_ignores_malformed_saved_target_data(GameTestHelper helper) {
+      Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+      BlockPos clickPos = TEST_POS;
+      helper.setBlock(clickPos, Blocks.STONE.defaultBlockState());
+      ItemStack malformedPearl = new ItemStack((Item)ControlsModule.SWITCHLINK_PEARL.get());
+      CompoundTag malformed = new CompoundTag();
+      malformed.putString("target_dimension", helper.getLevel().dimension().location().toString());
+      malformed.putString("target_x", "not-a-number");
+      malformed.putString("target_y", "not-a-number");
+      malformed.putString("target_z", "not-a-number");
+      malformedPearl.set(DataComponents.CUSTOM_DATA, CustomData.of(malformed));
+      player.setItemInHand(InteractionHand.MAIN_HAND, malformedPearl);
+      player.setShiftKeyDown(true);
+      InteractionResult result = malformedPearl.getItem().useOn(useOnContext(helper, player, clickPos));
+      helper.assertTrue(result == InteractionResult.PASS, "malformed Switch Link Pearl data should behave as an unlinked pearl instead of targeting the origin");
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 80)
+   public static void cased_switchlink_receivers_are_full_blocks_not_surface_mounts(GameTestHelper helper) {
+      assertCasedSwitchLinkFullBlock(helper, "industrial_switchlink_cased_receiver", TEST_POS);
+      assertCasedSwitchLinkFullBlock(helper, "industrial_switchlink_cased_pulse_receiver", TEST_POS.offset(3, 0, 0));
       helper.succeed();
    }
 
@@ -488,6 +585,27 @@ public final class ControlRedstoneGameTests {
       return new UseOnContext(player, InteractionHand.MAIN_HAND, hit);
    }
 
+   private static InteractionResult useBlockAt(
+      GameTestHelper helper, Player player, BlockPos localPos, Direction clickedFace, double localX, double localY, double localZ
+   ) {
+      BlockPos absolutePos = helper.absolutePos(localPos);
+      Vec3 hitLocation = new Vec3(absolutePos.getX() + localX, absolutePos.getY() + localY, absolutePos.getZ() + localZ);
+      BlockHitResult hit = new BlockHitResult(hitLocation, clickedFace, absolutePos, false);
+      return helper.getBlockState(localPos).useWithoutItem(helper.getLevel(), player, hit);
+   }
+
+   private static BlockState placementState(GameTestHelper helper, Player player, Block block, BlockPos supportPos, Direction face) {
+      BlockPos absoluteSupportPos = helper.absolutePos(supportPos);
+      Vec3 hitLocation = new Vec3(
+         absoluteSupportPos.getX() + 0.5 + face.getNormal().getX() * 0.5,
+         absoluteSupportPos.getY() + 0.5 + face.getNormal().getY() * 0.5,
+         absoluteSupportPos.getZ() + 0.5 + face.getNormal().getZ() * 0.5
+      );
+      BlockHitResult hit = new BlockHitResult(hitLocation, face, absoluteSupportPos, false);
+      BlockPlaceContext context = new BlockPlaceContext(helper.getLevel(), player, InteractionHand.MAIN_HAND, new ItemStack(block), hit);
+      return block.getStateForPlacement(context);
+   }
+
    private static void assertElevatorPlacementVariant(GameTestHelper helper, Player player, Block block, double localY, int expectedVariant, String message) {
       BlockPos absolutePos = helper.absolutePos(TEST_POS);
       Vec3 hitLocation = new Vec3(absolutePos.getX() + 0.5, absolutePos.getY() + localY, absolutePos.getZ() + 0.5);
@@ -545,6 +663,14 @@ public final class ControlRedstoneGameTests {
       helper.assertTrue(!collisionShape(helper, state).isEmpty(), name + " should block movement while closed");
    }
 
+   private static void assertOpenTrapdoorPanel(GameTestHelper helper, BlockState state, String name) {
+      AABB bounds = selectionBounds(helper, state);
+      helper.assertTrue(bounds.maxX - bounds.minX >= 0.95, name + " selection should span the open plate width");
+      helper.assertTrue(bounds.maxY - bounds.minY >= 0.95, name + " selection should span the open plate height");
+      helper.assertTrue(bounds.maxZ - bounds.minZ <= 0.07, name + " selection should match the vertical open panel");
+      helper.assertTrue(!collisionShape(helper, state).isEmpty(), name + " should keep collision on its visible open panel");
+   }
+
    private static void assertPlantShape(GameTestHelper helper, BlockState state, String name) {
       AABB bounds = selectionBounds(helper, state);
       helper.assertTrue(bounds.maxX - bounds.minX < 0.9, name + " selection should stay plant-sized");
@@ -554,6 +680,25 @@ public final class ControlRedstoneGameTests {
 
    private static void assertEmptyCollision(GameTestHelper helper, BlockState state, String message) {
       helper.assertTrue(collisionShape(helper, state).isEmpty(), message);
+   }
+
+   private static void assertCasedSwitchLinkFullBlock(GameTestHelper helper, String name, BlockPos pos) {
+      Block block = control(name);
+      BlockPos supportPos = pos.west();
+      helper.setBlock(supportPos, Blocks.STONE.defaultBlockState());
+      helper.setBlock(pos, (BlockState)block.defaultBlockState().setValue(ControlsBlockTypes.FACING, Direction.EAST));
+      helper.setBlock(supportPos, Blocks.AIR.defaultBlockState());
+      helper.assertTrue(helper.getBlockState(pos).is(block), name + " should survive after adjacent backing support is removed");
+      AABB bounds = helper.getBlockState(pos).getCollisionShape(helper.getLevel(), helper.absolutePos(pos)).bounds();
+      helper.assertTrue(
+         bounds.minX == 0.0
+            && bounds.minY == 0.0
+            && bounds.minZ == 0.0
+            && bounds.maxX == 1.0
+            && bounds.maxY == 1.0
+            && bounds.maxZ == 1.0,
+         name + " should use full-block collision; actual bounds=" + bounds
+      );
    }
 
    private static AABB selectionBounds(GameTestHelper helper, BlockState state) {

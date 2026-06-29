@@ -14,7 +14,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.DeferredRegister.Items;
 
 public final class ModItems {
-   public static final Items ITEMS = DeferredRegister.createItems("engineers_decor_reforged");
+   public static final Items ITEMS = DeferredRegister.createItems("immersive_engineer_decor_controls_tool_reforged");
    private static final List<DeferredItem<? extends Item>> MUTABLE_ORDERED_ITEMS = new ArrayList<>();
    public static final List<DeferredItem<? extends Item>> ORDERED_ITEMS = Collections.unmodifiableList(MUTABLE_ORDERED_ITEMS);
 

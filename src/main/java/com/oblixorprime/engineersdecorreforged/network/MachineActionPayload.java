@@ -7,7 +7,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;
 import net.minecraft.resources.ResourceLocation;
 
 public record MachineActionPayload(int containerId, int action, int valueA, int valueB) implements CustomPacketPayload {
-   public static final Type<MachineActionPayload> TYPE = new Type(ResourceLocation.fromNamespaceAndPath("engineers_decor_reforged", "machine_action"));
+   public static final Type<MachineActionPayload> TYPE = new Type(ResourceLocation.fromNamespaceAndPath("immersive_engineer_decor_controls_tool_reforged", "machine_action"));
    public static final StreamCodec<RegistryFriendlyByteBuf, MachineActionPayload> STREAM_CODEC = new StreamCodec<RegistryFriendlyByteBuf, MachineActionPayload>() {
       public MachineActionPayload decode(RegistryFriendlyByteBuf buffer) {
          return new MachineActionPayload(buffer.readVarInt(), buffer.readVarInt(), buffer.readVarInt(), buffer.readVarInt());

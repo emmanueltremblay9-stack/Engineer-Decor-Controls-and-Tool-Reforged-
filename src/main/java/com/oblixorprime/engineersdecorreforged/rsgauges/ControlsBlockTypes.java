@@ -52,6 +52,10 @@ public final class ControlsBlockTypes {
    private static final VoxelShape CONTACT_PLATE_SHAPE = Block.box(0.0, 0.0, 0.0, 16.0, 1.0, 16.0);
    private static final VoxelShape FALLTHROUGH_FRAME_SHAPE = Block.box(0.0, 11.0, 0.0, 16.0, 14.0, 16.0);
    private static final VoxelShape TRAPDOOR_PANEL_SHAPE = Block.box(0.0, 14.0, 0.0, 16.0, 16.0, 16.0);
+   private static final VoxelShape OPEN_TRAPDOOR_NORTH_SHAPE = Block.box(0.0, 0.0, 0.0, 16.0, 16.0, 1.0);
+   private static final VoxelShape OPEN_TRAPDOOR_EAST_SHAPE = Block.box(15.0, 0.0, 0.0, 16.0, 16.0, 16.0);
+   private static final VoxelShape OPEN_TRAPDOOR_SOUTH_SHAPE = Block.box(0.0, 0.0, 15.0, 16.0, 16.0, 16.0);
+   private static final VoxelShape OPEN_TRAPDOOR_WEST_SHAPE = Block.box(0.0, 0.0, 0.0, 1.0, 16.0, 16.0);
    private static final VoxelShape POWER_PLANT_SHAPE = Block.box(2.0, 0.0, 2.0, 14.0, 13.0, 14.0);
 
    private ControlsBlockTypes() {
@@ -66,6 +70,19 @@ public final class ControlsBlockTypes {
          case UP -> Block.box(min, 0.0, min, max, thickness, max);
          case DOWN -> Block.box(min, 16.0 - thickness, min, max, 16.0, max);
          default -> throw new MatchException(null, null);
+      };
+   }
+
+   private static VoxelShape trapdoorPanelShape(BlockState state) {
+      if (!(Boolean)state.getValue(POWERED)) {
+         return TRAPDOOR_PANEL_SHAPE;
+      }
+
+      return switch ((Direction)state.getValue(FACING)) {
+         case EAST -> OPEN_TRAPDOOR_EAST_SHAPE;
+         case SOUTH -> OPEN_TRAPDOOR_SOUTH_SHAPE;
+         case WEST -> OPEN_TRAPDOOR_WEST_SHAPE;
+         case NORTH, UP, DOWN -> OPEN_TRAPDOOR_NORTH_SHAPE;
       };
    }
 
@@ -242,7 +259,7 @@ public final class ControlsBlockTypes {
          for (Direction direction : Direction.values()) {
             BlockPos neighbor = pos.relative(direction);
             if (!neighbor.equals(excludedNeighbor)) {
-               signal = Math.max(signal, level.getSignal(neighbor, direction));
+               signal = Math.max(signal, level.getSignal(neighbor, direction.getOpposite()));
                if (signal >= 15) {
                   return 15;
                }
@@ -274,12 +291,25 @@ public final class ControlsBlockTypes {
       }
 
       @Override
+      public BlockState getStateForPlacement(BlockPlaceContext context) {
+         if (this.requiresFloorSupport() && context.getClickedFace() != Direction.UP) {
+            return null;
+         }
+
+         return super.getStateForPlacement(context);
+      }
+
+      private boolean requiresFloorSupport() {
+         return this.shape != ControlsBlockTypes.ContactShape.ATTACHED_BUTTON;
+      }
+
+      @Override
       protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
          return switch (this.shape) {
             case ATTACHED_BUTTON -> super.getShape(state, level, pos, context);
             case CONTACT_PLATE -> ControlsBlockTypes.CONTACT_PLATE_SHAPE;
             case FALLTHROUGH_FRAME -> ControlsBlockTypes.FALLTHROUGH_FRAME_SHAPE;
-            case TRAPDOOR_PANEL -> ControlsBlockTypes.TRAPDOOR_PANEL_SHAPE;
+            case TRAPDOOR_PANEL -> ControlsBlockTypes.trapdoorPanelShape(state);
             case POWER_PLANT -> ControlsBlockTypes.POWER_PLANT_SHAPE;
          };
       }
@@ -289,7 +319,7 @@ public final class ControlsBlockTypes {
          return switch (this.shape) {
             case ATTACHED_BUTTON, FALLTHROUGH_FRAME, POWER_PLANT -> Shapes.empty();
             case CONTACT_PLATE -> ControlsBlockTypes.CONTACT_PLATE_SHAPE;
-            case TRAPDOOR_PANEL -> state.getValue(ControlsBlockTypes.POWERED) ? Shapes.empty() : ControlsBlockTypes.TRAPDOOR_PANEL_SHAPE;
+            case TRAPDOOR_PANEL -> ControlsBlockTypes.trapdoorPanelShape(state);
          };
       }
 
@@ -351,14 +381,22 @@ public final class ControlsBlockTypes {
 
       protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
          if (!level.isClientSide) {
-            double localY = hit.getLocation().y - pos.getY();
-            int next = Mth.clamp((int)Math.floor(localY * 16.0), 0, 15);
+            int next = dimmerPowerFromHit(state, pos, hit);
             level.setBlock(pos, (BlockState)((BlockState)state.setValue(ControlsBlockTypes.POWER, next)).setValue(ControlsBlockTypes.POWERED, next > 0), 3);
             level.updateNeighborsAt(pos, this);
             level.updateNeighborsAt(pos.relative(((Direction)state.getValue(FACING)).getOpposite()), this);
          }
 
          return InteractionResult.SUCCESS;
+      }
+
+      private static int dimmerPowerFromHit(BlockState state, BlockPos pos, BlockHitResult hit) {
+         Vec3 location = hit.getLocation();
+         double travel = switch ((Direction)state.getValue(FACING)) {
+            case UP, DOWN -> location.z - pos.getZ();
+            default -> location.y - pos.getY();
+         };
+         return Mth.clamp((int)Math.floor(travel * 16.0), 0, 15);
       }
 
       protected boolean isSignalSource(BlockState state) {
@@ -691,6 +729,41 @@ public final class ControlsBlockTypes {
       }
    }
 
+   public static class CasedSwitchLinkPulseReceiverBlock extends ControlsBlockTypes.SwitchLinkPulseReceiverBlock {
+      public static final MapCodec<ControlsBlockTypes.CasedSwitchLinkPulseReceiverBlock> CODEC = simpleCodec(
+         ControlsBlockTypes.CasedSwitchLinkPulseReceiverBlock::new
+      );
+
+      public CasedSwitchLinkPulseReceiverBlock(Properties properties) {
+         super(properties);
+      }
+
+      @Override
+      protected MapCodec<? extends DirectionalBlock> codec() {
+         return CODEC;
+      }
+
+      @Override
+      protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+         return true;
+      }
+
+      @Override
+      protected BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
+         return state;
+      }
+
+      @Override
+      protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+         return Shapes.block();
+      }
+
+      @Override
+      protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+         return Shapes.block();
+      }
+   }
+
    public static class SwitchLinkReceiverBlock extends ControlsBlockTypes.ToggleSwitchBlock {
       public static final MapCodec<ControlsBlockTypes.SwitchLinkReceiverBlock> CODEC = simpleCodec(ControlsBlockTypes.SwitchLinkReceiverBlock::new);
 
@@ -719,6 +792,41 @@ public final class ControlsBlockTypes {
 
       protected void receiveSwitchLink(Level level, BlockPos pos, BlockState state) {
          this.setPowered(level, pos, state, !(Boolean)state.getValue(ControlsBlockTypes.POWERED));
+      }
+   }
+
+   public static class CasedSwitchLinkReceiverBlock extends ControlsBlockTypes.SwitchLinkReceiverBlock {
+      public static final MapCodec<ControlsBlockTypes.CasedSwitchLinkReceiverBlock> CODEC = simpleCodec(
+         ControlsBlockTypes.CasedSwitchLinkReceiverBlock::new
+      );
+
+      public CasedSwitchLinkReceiverBlock(Properties properties) {
+         super(properties);
+      }
+
+      @Override
+      protected MapCodec<? extends DirectionalBlock> codec() {
+         return CODEC;
+      }
+
+      @Override
+      protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+         return true;
+      }
+
+      @Override
+      protected BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
+         return state;
+      }
+
+      @Override
+      protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+         return Shapes.block();
+      }
+
+      @Override
+      protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+         return Shapes.block();
       }
    }
 

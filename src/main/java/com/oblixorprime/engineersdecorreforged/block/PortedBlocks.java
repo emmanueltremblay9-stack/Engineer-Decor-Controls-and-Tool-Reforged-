@@ -2,13 +2,18 @@ package com.oblixorprime.engineersdecorreforged.block;
 
 import com.mojang.serialization.MapCodec;
 import com.oblixorprime.engineersdecorreforged.ModBlocks;
+import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -29,9 +34,11 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.BlockSetType;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.DoorHingeSide;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.AABB;
@@ -63,6 +70,9 @@ public final class PortedBlocks {
    public static final IntegerProperty ARIADNE_MARKER_ROTATION = IntegerProperty.create("rotation", 0, 7);
    public static final EnumProperty<PortedBlocks.SimpleHalf> HALF = EnumProperty.create("half", PortedBlocks.SimpleHalf.class);
    public static final EnumProperty<DoorHingeSide> HINGE = BlockStateProperties.DOOR_HINGE;
+   public static final EnumProperty<PortedBlocks.SlidingDoorPairSide> PAIR_SIDE = EnumProperty.create(
+      "pair_side", PortedBlocks.SlidingDoorPairSide.class
+   );
    private static final VoxelShape FLOOR_GRATING_SHAPE = Block.box(0.0, 0.0, 0.0, 16.0, 2.0, 16.0);
    private static final VoxelShape CATWALK_FLOOR_SHAPE = Block.box(0.0, 0.0, 0.0, 16.0, 3.0, 16.0);
    private static final VoxelShape RAISED_CATWALK_SHAPE = Block.box(0.0, 14.0, 0.0, 16.0, 16.0, 16.0);
@@ -430,6 +440,14 @@ public final class PortedBlocks {
 
    public static class FenceGateSegmentBlock extends HorizontalDirectionalBlock {
       public static final MapCodec<PortedBlocks.FenceGateSegmentBlock> CODEC = simpleCodec(PortedBlocks.FenceGateSegmentBlock::new);
+      private static final VoxelShape CLOSED_NORTH_SOUTH_SHAPE = Block.box(0.0, 0.0, 7.0, 16.0, 16.0, 9.0);
+      private static final VoxelShape CLOSED_EAST_WEST_SHAPE = Block.box(7.0, 0.0, 0.0, 9.0, 16.0, 16.0);
+      private static final VoxelShape OPEN_NORTH_SHAPE = Shapes.or(
+         Block.box(0.0, 0.0, 6.5, 3.0, 16.0, 10.5), Block.box(12.0, 0.0, 0.0, 16.0, 16.0, 10.5)
+      );
+      private static final VoxelShape OPEN_EAST_SHAPE = rotateClockwise(OPEN_NORTH_SHAPE);
+      private static final VoxelShape OPEN_SOUTH_SHAPE = rotateClockwise(OPEN_EAST_SHAPE);
+      private static final VoxelShape OPEN_WEST_SHAPE = rotateClockwise(OPEN_SOUTH_SHAPE);
 
       public FenceGateSegmentBlock(Properties properties) {
          super(properties);
@@ -495,11 +513,31 @@ public final class PortedBlocks {
 
       protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
          Direction facing = (Direction)state.getValue(PortedBlocks.HORIZONTAL_FACING);
-         return facing.getAxis() == Axis.Z ? Block.box(0.0, 0.0, 7.0, 16.0, 16.0, 9.0) : Block.box(7.0, 0.0, 0.0, 9.0, 16.0, 16.0);
+         if ((Boolean)state.getValue(PortedBlocks.OPEN)) {
+            return switch (facing) {
+               case NORTH -> OPEN_NORTH_SHAPE;
+               case EAST -> OPEN_EAST_SHAPE;
+               case SOUTH -> OPEN_SOUTH_SHAPE;
+               case WEST -> OPEN_WEST_SHAPE;
+               default -> OPEN_NORTH_SHAPE;
+            };
+         }
+
+         return facing.getAxis() == Axis.Z ? CLOSED_NORTH_SOUTH_SHAPE : CLOSED_EAST_WEST_SHAPE;
       }
 
       protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-         return state.getValue(PortedBlocks.OPEN) ? Shapes.empty() : this.getShape(state, level, pos, context);
+         return this.getShape(state, level, pos, context);
+      }
+
+      private static VoxelShape rotateClockwise(VoxelShape shape) {
+         VoxelShape rotated = Shapes.empty();
+
+         for (AABB box : shape.toAabbs()) {
+            rotated = Shapes.or(rotated, Shapes.create(1.0 - box.maxZ, box.minY, box.minX, 1.0 - box.minZ, box.maxY, box.maxX));
+         }
+
+         return rotated;
       }
    }
 
@@ -597,7 +635,7 @@ public final class PortedBlocks {
       }
 
       protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-         return state.getValue(PortedBlocks.OPEN) ? Shapes.empty() : this.getShape(state, level, pos, context);
+         return this.getShape(state, level, pos, context);
       }
    }
 
@@ -733,6 +771,30 @@ public final class PortedBlocks {
 
       public String getSerializedName() {
          return this.name;
+      }
+   }
+
+   public enum SlidingDoorPairSide implements StringRepresentable {
+      SINGLE("single"),
+      LEFT("left"),
+      RIGHT("right");
+
+      private final String name;
+
+      SlidingDoorPairSide(String name) {
+         this.name = name;
+      }
+
+      public String getSerializedName() {
+         return this.name;
+      }
+
+      public SlidingDoorPairSide opposite() {
+         return switch (this) {
+            case LEFT -> RIGHT;
+            case RIGHT -> LEFT;
+            case SINGLE -> SINGLE;
+         };
       }
    }
 
@@ -904,6 +966,7 @@ public final class PortedBlocks {
 
    public static class SlidingDoorBlock extends DoorBlock {
       public static final MapCodec<PortedBlocks.SlidingDoorBlock> CODEC = simpleCodec(properties -> new PortedBlocks.SlidingDoorBlock(BlockSetType.OAK, properties));
+      private static final int UPDATE_FLAGS = 10;
       private static final VoxelShape CLOSED_NORTH_SOUTH_SHAPE = Shapes.or(
          Block.box(0.0, 0.0, 7.0, 16.0, 16.0, 9.0),
          Block.box(15.0, 0.0, 6.0, 16.0, 16.0, 7.0),
@@ -921,6 +984,9 @@ public final class PortedBlocks {
 
       public SlidingDoorBlock(BlockSetType type, Properties properties) {
          super(type, properties);
+         this.registerDefaultState(
+            (BlockState)this.defaultBlockState().setValue(PortedBlocks.PAIR_SIDE, PortedBlocks.SlidingDoorPairSide.SINGLE)
+         );
       }
 
       @Override
@@ -929,8 +995,316 @@ public final class PortedBlocks {
       }
 
       @Override
+      protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
+         super.createBlockStateDefinition(builder);
+         builder.add(new Property[]{PortedBlocks.PAIR_SIDE});
+      }
+
+      @Override
+      public BlockState getStateForPlacement(BlockPlaceContext context) {
+         BlockState state = super.getStateForPlacement(context);
+         if (state == null) {
+            return null;
+         }
+
+         PortedBlocks.SlidingDoorPair pair = this.findSinglePlacementPair(context.getLevel(), context.getClickedPos(), state);
+         if (pair == null) {
+            return setPairSide(state, PortedBlocks.SlidingDoorPairSide.SINGLE);
+         }
+
+         boolean powered = isDirectlyPowered(context.getLevel(), context.getClickedPos()) || isDirectlyPowered(context.getLevel(), pair.pos);
+         boolean open = powered || (Boolean)pair.state.getValue(DoorBlock.OPEN);
+         return (BlockState)((BlockState)setPairSide(state, pair.selfSide).setValue(DoorBlock.POWERED, powered)).setValue(DoorBlock.OPEN, open);
+      }
+
+      @Override
+      public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
+         super.setPlacedBy(level, pos, state, placer, stack);
+         if (!level.isClientSide) {
+            this.finishPairingAfterPlacement(level, pos, level.getBlockState(pos));
+         }
+      }
+
+      @Override
+      protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+         if (!this.type().canOpenByHand()) {
+            return InteractionResult.PASS;
+         }
+
+         if (!level.isClientSide) {
+            BlockPos lowerPos = lowerPos(pos, state);
+            BlockState lowerState = level.getBlockState(lowerPos);
+            if (this.isLowerSlidingDoor(lowerState)) {
+               PortedBlocks.SlidingDoorPair pair = this.storedPair(level, lowerPos, lowerState);
+               boolean powered = isDirectlyPowered(level, lowerPos) || pair != null && isDirectlyPowered(level, pair.pos);
+               boolean open = powered || !(Boolean)lowerState.getValue(DoorBlock.OPEN);
+               this.setSynchronizedState(player, level, lowerPos, lowerState, pair, powered, open);
+            }
+         }
+
+         return InteractionResult.sidedSuccess(level.isClientSide);
+      }
+
+      @Override
+      public void setOpen(@Nullable Entity entity, Level level, BlockState state, BlockPos pos, boolean open) {
+         if (!state.is(this)) {
+            return;
+         }
+
+         BlockPos lowerPos = lowerPos(pos, state);
+         BlockState lowerState = level.getBlockState(lowerPos);
+         if (!this.isLowerSlidingDoor(lowerState)) {
+            return;
+         }
+
+         PortedBlocks.SlidingDoorPair pair = this.storedPair(level, lowerPos, lowerState);
+         boolean powered = isDirectlyPowered(level, lowerPos) || pair != null && isDirectlyPowered(level, pair.pos);
+         this.setSynchronizedState(entity, level, lowerPos, lowerState, pair, powered, powered || open);
+      }
+
+      @Override
+      protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+         if (!level.isClientSide) {
+            BlockPos lowerPos = lowerPos(pos, state);
+            BlockState lowerState = level.getBlockState(lowerPos);
+            if (this.isLowerSlidingDoor(lowerState)) {
+               this.syncPoweredState(level, lowerPos, lowerState);
+            }
+         }
+      }
+
+      @Override
+      protected BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
+         BlockState updated = super.updateShape(state, direction, neighborState, level, pos, neighborPos);
+         if (!updated.is(this) || !direction.getAxis().isHorizontal()) {
+            return updated;
+         }
+
+         PortedBlocks.SlidingDoorPairSide pairSide = updated.getValue(PortedBlocks.PAIR_SIDE);
+         if (pairSide != PortedBlocks.SlidingDoorPairSide.SINGLE && direction == pairedDirection(updated)) {
+            BlockPos lowerPos = lowerPos(pos, updated);
+            BlockPos pairedLowerPos = lowerPos.relative(direction);
+            BlockPos neighborLowerPos = lowerPos(neighborPos, neighborState);
+            BlockState pairedLowerState = level.getBlockState(pairedLowerPos);
+            if (!pairedLowerPos.equals(neighborLowerPos) || !this.isReciprocalPair(updated, pairedLowerState)) {
+               return setPairSide(updated, PortedBlocks.SlidingDoorPairSide.SINGLE);
+            }
+         }
+
+         return updated;
+      }
+
+      @Override
+      protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+         if (!level.isClientSide && !state.is(newState.getBlock())) {
+            this.unpairNeighborOnRemove(level, pos, state);
+         }
+
+         super.onRemove(state, level, pos, newState, movedByPiston);
+      }
+
+      @Override
       protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
          return state.getValue(OPEN) ? openShape(state) : closedShape(state);
+      }
+
+      private void finishPairingAfterPlacement(Level level, BlockPos lowerPos, BlockState lowerState) {
+         if (!this.isLowerSlidingDoor(lowerState)) {
+            return;
+         }
+
+         PortedBlocks.SlidingDoorPair pair = this.findSinglePlacementPair(level, lowerPos, lowerState);
+         if (pair == null) {
+            this.setDoorHalves(level, lowerPos, setPairSide(lowerState, PortedBlocks.SlidingDoorPairSide.SINGLE));
+            this.syncPoweredState(level, lowerPos, level.getBlockState(lowerPos));
+            return;
+         }
+
+         boolean powered = isDirectlyPowered(level, lowerPos) || isDirectlyPowered(level, pair.pos);
+         boolean open = powered || (Boolean)lowerState.getValue(DoorBlock.OPEN) || (Boolean)pair.state.getValue(DoorBlock.OPEN);
+         BlockState selfState = (BlockState)((BlockState)setPairSide(lowerState, pair.selfSide).setValue(DoorBlock.POWERED, powered))
+            .setValue(DoorBlock.OPEN, open);
+         BlockState pairState = (BlockState)((BlockState)setPairSide(pair.state, pair.pairSide).setValue(DoorBlock.POWERED, powered))
+            .setValue(DoorBlock.OPEN, open);
+         this.setDoorHalves(level, lowerPos, selfState);
+         this.setDoorHalves(level, pair.pos, pairState);
+      }
+
+      private void syncPoweredState(Level level, BlockPos lowerPos, BlockState lowerState) {
+         PortedBlocks.SlidingDoorPair pair = this.storedPair(level, lowerPos, lowerState);
+         boolean powered = isDirectlyPowered(level, lowerPos) || pair != null && isDirectlyPowered(level, pair.pos);
+         boolean powerChanged = powered != (Boolean)lowerState.getValue(DoorBlock.POWERED)
+            || pair != null && powered != (Boolean)pair.state.getValue(DoorBlock.POWERED);
+
+         if (pair == null && lowerState.getValue(PortedBlocks.PAIR_SIDE) != PortedBlocks.SlidingDoorPairSide.SINGLE) {
+            BlockState singleState = (BlockState)((BlockState)setPairSide(lowerState, PortedBlocks.SlidingDoorPairSide.SINGLE)
+                  .setValue(DoorBlock.POWERED, powered))
+               .setValue(DoorBlock.OPEN, powered || (Boolean)lowerState.getValue(DoorBlock.OPEN));
+            this.setDoorHalves(level, lowerPos, singleState);
+            return;
+         }
+
+         if (powerChanged) {
+            this.setSynchronizedState(null, level, lowerPos, lowerState, pair, powered, powered);
+         }
+      }
+
+      private void setSynchronizedState(
+         @Nullable Entity entity,
+         Level level,
+         BlockPos lowerPos,
+         BlockState lowerState,
+         @Nullable PortedBlocks.SlidingDoorPair pair,
+         boolean powered,
+         boolean open
+      ) {
+         boolean openChanged = open != (Boolean)lowerState.getValue(DoorBlock.OPEN)
+            || pair != null && open != (Boolean)pair.state.getValue(DoorBlock.OPEN);
+         BlockState selfState = (BlockState)((BlockState)lowerState.setValue(DoorBlock.POWERED, powered)).setValue(DoorBlock.OPEN, open);
+         this.setDoorHalves(level, lowerPos, selfState);
+         if (pair != null) {
+            BlockState pairState = (BlockState)((BlockState)pair.state.setValue(DoorBlock.POWERED, powered)).setValue(DoorBlock.OPEN, open);
+            this.setDoorHalves(level, pair.pos, pairState);
+         }
+
+         if (openChanged) {
+            this.playSlidingDoorSound(entity, level, lowerPos, open);
+            level.gameEvent(entity, open ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, lowerPos);
+         }
+      }
+
+      private void setDoorHalves(Level level, BlockPos lowerPos, BlockState lowerState) {
+         BlockState normalizedLower = (BlockState)lowerState.setValue(DoorBlock.HALF, DoubleBlockHalf.LOWER);
+         if (!level.getBlockState(lowerPos).equals(normalizedLower)) {
+            level.setBlock(lowerPos, normalizedLower, UPDATE_FLAGS);
+         }
+
+         BlockPos upperPos = lowerPos.above();
+         BlockState upperState = level.getBlockState(upperPos);
+         if (upperState.is(this)) {
+            BlockState normalizedUpper = (BlockState)normalizedLower.setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER);
+            if (!upperState.equals(normalizedUpper)) {
+               level.setBlock(upperPos, normalizedUpper, UPDATE_FLAGS);
+            }
+         }
+      }
+
+      private PortedBlocks.SlidingDoorPair findSinglePlacementPair(LevelAccessor level, BlockPos lowerPos, BlockState lowerState) {
+         PortedBlocks.SlidingDoorPair preferred = lowerState.getValue(DoorBlock.HINGE) == DoorHingeSide.RIGHT
+            ? this.singlePlacementPair(level, lowerPos, lowerState, lowerState.getValue(DoorBlock.FACING).getCounterClockWise())
+            : this.singlePlacementPair(level, lowerPos, lowerState, lowerState.getValue(DoorBlock.FACING).getClockWise());
+         if (preferred != null) {
+            return preferred;
+         }
+
+         Direction fallbackDirection = lowerState.getValue(DoorBlock.HINGE) == DoorHingeSide.RIGHT
+            ? lowerState.getValue(DoorBlock.FACING).getClockWise()
+            : lowerState.getValue(DoorBlock.FACING).getCounterClockWise();
+         return this.singlePlacementPair(level, lowerPos, lowerState, fallbackDirection);
+      }
+
+      @Nullable
+      private PortedBlocks.SlidingDoorPair singlePlacementPair(LevelAccessor level, BlockPos lowerPos, BlockState lowerState, Direction direction) {
+         Direction facing = lowerState.getValue(DoorBlock.FACING);
+         BlockPos pairPos = lowerPos.relative(direction);
+         BlockState pairState = level.getBlockState(pairPos);
+         if (!this.isLowerSlidingDoor(pairState)
+            || pairState.getValue(DoorBlock.FACING) != facing
+            || pairState.getValue(PortedBlocks.PAIR_SIDE) != PortedBlocks.SlidingDoorPairSide.SINGLE
+            || !this.hasMatchingUpper(level, pairPos, pairState)) {
+            return null;
+         }
+
+         PortedBlocks.SlidingDoorPairSide selfSide = direction == facing.getClockWise()
+            ? PortedBlocks.SlidingDoorPairSide.LEFT
+            : PortedBlocks.SlidingDoorPairSide.RIGHT;
+         return new PortedBlocks.SlidingDoorPair(pairPos, pairState, selfSide, selfSide.opposite());
+      }
+
+      @Nullable
+      private PortedBlocks.SlidingDoorPair storedPair(LevelAccessor level, BlockPos lowerPos, BlockState lowerState) {
+         PortedBlocks.SlidingDoorPairSide selfSide = lowerState.getValue(PortedBlocks.PAIR_SIDE);
+         if (selfSide == PortedBlocks.SlidingDoorPairSide.SINGLE) {
+            return null;
+         }
+
+         BlockPos pairPos = lowerPos.relative(pairedDirection(lowerState));
+         BlockState pairState = level.getBlockState(pairPos);
+         if (!this.isReciprocalPair(lowerState, pairState)) {
+            return null;
+         }
+
+         return new PortedBlocks.SlidingDoorPair(pairPos, pairState, selfSide, selfSide.opposite());
+      }
+
+      private boolean isReciprocalPair(BlockState selfState, BlockState pairState) {
+         if (!this.isLowerSlidingDoor(pairState)
+            || pairState.getValue(DoorBlock.FACING) != selfState.getValue(DoorBlock.FACING)
+            || pairState.getValue(PortedBlocks.PAIR_SIDE) != selfState.getValue(PortedBlocks.PAIR_SIDE).opposite()) {
+            return false;
+         }
+
+         return true;
+      }
+
+      private boolean isLowerSlidingDoor(BlockState state) {
+         return state.is(this) && state.getValue(DoorBlock.HALF) == DoubleBlockHalf.LOWER;
+      }
+
+      private boolean hasMatchingUpper(LevelAccessor level, BlockPos lowerPos, BlockState lowerState) {
+         BlockState upperState = level.getBlockState(lowerPos.above());
+         return upperState.is(this)
+            && upperState.getValue(DoorBlock.HALF) == DoubleBlockHalf.UPPER
+            && upperState.getValue(DoorBlock.FACING) == lowerState.getValue(DoorBlock.FACING);
+      }
+
+      private void unpairNeighborOnRemove(Level level, BlockPos pos, BlockState state) {
+         PortedBlocks.SlidingDoorPairSide pairSide = state.getValue(PortedBlocks.PAIR_SIDE);
+         if (pairSide == PortedBlocks.SlidingDoorPairSide.SINGLE) {
+            return;
+         }
+
+         BlockPos lowerPos = lowerPos(pos, state);
+         BlockPos pairPos = lowerPos.relative(pairedDirection(state));
+         BlockState pairState = level.getBlockState(pairPos);
+         if (!this.isReciprocalPair(state, pairState)) {
+            return;
+         }
+
+         boolean powered = isDirectlyPowered(level, pairPos);
+         BlockState singleState = (BlockState)((BlockState)setPairSide(pairState, PortedBlocks.SlidingDoorPairSide.SINGLE)
+               .setValue(DoorBlock.POWERED, powered))
+            .setValue(DoorBlock.OPEN, powered || (Boolean)pairState.getValue(DoorBlock.OPEN));
+         this.setDoorHalves(level, pairPos, singleState);
+      }
+
+      private static BlockPos lowerPos(BlockPos pos, BlockState state) {
+         return state.is(ModBlocks.METAL_SLIDING_DOOR.get()) && state.getValue(DoorBlock.HALF) == DoubleBlockHalf.UPPER ? pos.below() : pos;
+      }
+
+      private static boolean isDirectlyPowered(LevelAccessor level, BlockPos lowerPos) {
+         return level.hasNeighborSignal(lowerPos) || level.hasNeighborSignal(lowerPos.above());
+      }
+
+      private static Direction pairedDirection(BlockState state) {
+         PortedBlocks.SlidingDoorPairSide pairSide = state.getValue(PortedBlocks.PAIR_SIDE);
+         Direction facing = state.getValue(DoorBlock.FACING);
+         return pairSide == PortedBlocks.SlidingDoorPairSide.LEFT ? facing.getClockWise() : facing.getCounterClockWise();
+      }
+
+      private static BlockState setPairSide(BlockState state, PortedBlocks.SlidingDoorPairSide pairSide) {
+         BlockState pairedState = (BlockState)state.setValue(PortedBlocks.PAIR_SIDE, pairSide);
+         return switch (pairSide) {
+            case LEFT -> (BlockState)pairedState.setValue(DoorBlock.HINGE, DoorHingeSide.LEFT);
+            case RIGHT -> (BlockState)pairedState.setValue(DoorBlock.HINGE, DoorHingeSide.RIGHT);
+            case SINGLE -> pairedState;
+         };
+      }
+
+      private void playSlidingDoorSound(@Nullable Entity entity, Level level, BlockPos pos, boolean open) {
+         level.playSound(
+            entity, pos, open ? this.type().doorOpen() : this.type().doorClose(), SoundSource.BLOCKS, 1.0F, level.getRandom().nextFloat() * 0.1F + 0.9F
+         );
       }
 
       private static VoxelShape closedShape(BlockState state) {
@@ -967,6 +1341,20 @@ public final class PortedBlocks {
          }
 
          return rotated;
+      }
+   }
+
+   private static final class SlidingDoorPair {
+      private final BlockPos pos;
+      private final BlockState state;
+      private final PortedBlocks.SlidingDoorPairSide selfSide;
+      private final PortedBlocks.SlidingDoorPairSide pairSide;
+
+      private SlidingDoorPair(BlockPos pos, BlockState state, PortedBlocks.SlidingDoorPairSide selfSide, PortedBlocks.SlidingDoorPairSide pairSide) {
+         this.pos = pos;
+         this.state = state;
+         this.selfSide = selfSide;
+         this.pairSide = pairSide;
       }
    }
 }

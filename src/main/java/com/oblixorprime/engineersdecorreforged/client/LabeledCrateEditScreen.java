@@ -20,7 +20,7 @@ public final class LabeledCrateEditScreen extends Screen {
    private EditBox secondLine;
 
    public LabeledCrateEditScreen(BlockPos pos, List<String> lines) {
-      super(Component.translatable("screen.engineers_decor_reforged.labeled_crate_label"));
+      super(Component.translatable("screen.immersive_engineer_decor_controls_tool_reforged.labeled_crate_label"));
       this.pos = pos;
 
       for (int i = 0; i < Math.min(this.initialLines.length, lines.size()); i++) {
@@ -32,9 +32,9 @@ public final class LabeledCrateEditScreen extends Screen {
       int boxWidth = Mth.clamp(this.width - 48, 120, 180);
       int left = (this.width - boxWidth) / 2;
       int top = Mth.clamp(this.height / 2 - 58, 18, Math.max(18, this.height - 126));
-      this.firstLine = new EditBox(this.font, left, top + 30, boxWidth, 20, Component.translatable("screen.engineers_decor_reforged.labeled_crate_label.line1"));
+      this.firstLine = new EditBox(this.font, left, top + 30, boxWidth, 20, Component.translatable("screen.immersive_engineer_decor_controls_tool_reforged.labeled_crate_label.line1"));
       this.secondLine = new EditBox(
-         this.font, left, top + 56, boxWidth, 20, Component.translatable("screen.engineers_decor_reforged.labeled_crate_label.line2")
+         this.font, left, top + 56, boxWidth, 20, Component.translatable("screen.immersive_engineer_decor_controls_tool_reforged.labeled_crate_label.line2")
       );
       this.firstLine.setMaxLength(MachineBlockEntity.LABEL_MAX_UTF16_UNITS);
       this.secondLine.setMaxLength(MachineBlockEntity.LABEL_MAX_UTF16_UNITS);
@@ -59,7 +59,7 @@ public final class LabeledCrateEditScreen extends Screen {
       int top = Mth.clamp(this.height / 2 - 58, 18, Math.max(18, this.height - 126));
       graphics.drawCenteredString(this.font, this.title, this.width / 2, top, 16777215);
       graphics.drawCenteredString(
-         this.font, Component.translatable("screen.engineers_decor_reforged.labeled_crate_label.hint"), this.width / 2, top + 17, 10526880
+         this.font, Component.translatable("screen.immersive_engineer_decor_controls_tool_reforged.labeled_crate_label.hint"), this.width / 2, top + 17, 10526880
       );
       super.render(graphics, mouseX, mouseY, partialTick);
    }

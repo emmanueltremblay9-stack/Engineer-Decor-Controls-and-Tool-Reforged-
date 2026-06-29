@@ -5,6 +5,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
@@ -44,7 +45,7 @@ public class TrackerItem extends TooltipItem {
       tag.putInt("target_z", pos.getZ());
       stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
       if (context.getPlayer() != null) {
-         context.getPlayer().displayClientMessage(Component.translatable("item.engineers_decor_reforged.tracker.msg.locationset"), true);
+         context.getPlayer().displayClientMessage(Component.translatable("item.immersive_engineer_decor_controls_tool_reforged.tracker.msg.locationset"), true);
       }
 
       return InteractionResult.SUCCESS;
@@ -58,7 +59,7 @@ public class TrackerItem extends TooltipItem {
 
       if (!level.isClientSide) {
          stack.remove(DataComponents.CUSTOM_DATA);
-         player.displayClientMessage(Component.translatable("item.engineers_decor_reforged.tracker.hint.cleared"), true);
+         player.displayClientMessage(Component.translatable("item.immersive_engineer_decor_controls_tool_reforged.tracker.hint.cleared"), true);
       }
 
       return InteractionResultHolder.success(stack);
@@ -72,20 +73,23 @@ public class TrackerItem extends TooltipItem {
       if (dimension != null && hasCompleteTarget(tag)) {
          tooltip.add(
             Component.translatable(
-                  "item.engineers_decor_reforged.tracker.tip.target.location",
+                  "item.immersive_engineer_decor_controls_tool_reforged.tracker.tip.target.location",
                   new Object[]{tag.getInt("target_x") + ", " + tag.getInt("target_y") + ", " + tag.getInt("target_z")}
                )
                .withStyle(ChatFormatting.AQUA)
          );
-         tooltip.add(Component.literal(dimension.toString().replace("engineers_decor_reforged:", "")).withStyle(ChatFormatting.DARK_AQUA));
+         tooltip.add(Component.literal(dimension.toString().replace("immersive_engineer_decor_controls_tool_reforged:", "")).withStyle(ChatFormatting.DARK_AQUA));
       }
    }
 
    private static ResourceLocation targetDimension(CompoundTag tag) {
-      return tag.contains(TAG_DIMENSION) ? ResourceLocation.tryParse(tag.getString(TAG_DIMENSION)) : null;
+      return tag.contains(TAG_DIMENSION, Tag.TAG_STRING) ? ResourceLocation.tryParse(tag.getString(TAG_DIMENSION)) : null;
    }
 
    private static boolean hasCompleteTarget(CompoundTag tag) {
-      return tag.contains(TAG_DIMENSION) && tag.contains(TAG_X) && tag.contains(TAG_Y) && tag.contains(TAG_Z);
+      return tag.contains(TAG_DIMENSION, Tag.TAG_STRING)
+         && tag.contains(TAG_X, Tag.TAG_INT)
+         && tag.contains(TAG_Y, Tag.TAG_INT)
+         && tag.contains(TAG_Z, Tag.TAG_INT);
    }
 }

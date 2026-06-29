@@ -15,9 +15,11 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DoorHingeSide;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
+import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -27,7 +29,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
-@GameTestHolder("engineers_decor_reforged")
+@GameTestHolder("immersive_engineer_decor_controls_tool_reforged")
 @PrefixGameTestTemplate(false)
 public final class AccesswayBlockGameTests {
    private static final String TEMPLATE = "empty";
@@ -79,6 +81,31 @@ public final class AccesswayBlockGameTests {
       helper.assertTrue(
          helper.getLevel().getBlockState(helper.absolutePos(LOWER_POS)).isAir(), "removing upper steel mesh fence gate segment should remove lower segment"
       );
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 40)
+   public static void open_steel_mesh_fence_gate_collision_clears_center_passage(GameTestHelper helper) {
+      Block gate = (Block)ModBlocks.STEEL_MESH_FENCE_GATE.get();
+      BlockState closedNorth = (BlockState)((BlockState)((BlockState)gate.defaultBlockState().setValue(PortedBlocks.HORIZONTAL_FACING, Direction.NORTH))
+            .setValue(PortedBlocks.OPEN, false))
+         .setValue(PortedBlocks.SEGMENT, 0);
+      BlockState openNorth = (BlockState)closedNorth.setValue(PortedBlocks.OPEN, true);
+      VoxelShape closedNorthCollision = closedNorth.getCollisionShape(helper.getLevel(), helper.absolutePos(LOWER_POS));
+      VoxelShape openNorthCollision = openNorth.getCollisionShape(helper.getLevel(), helper.absolutePos(LOWER_POS));
+
+      assertShapeIntersects(helper, closedNorthCollision, 4.0, 4.0, 7.25, 12.0, 12.0, 8.75, "closed fence gate should block its center panel");
+      assertShapeDoesNotIntersect(
+         helper, openNorthCollision, 4.0, 4.0, 7.25, 12.0, 12.0, 8.75, "open fence gate should clear the center passage"
+      );
+      assertShapeIntersects(helper, openNorthCollision, 12.5, 4.0, 1.0, 15.5, 12.0, 9.0, "open fence gate should keep collision on the folded side leaf");
+
+      BlockState openEast = (BlockState)((BlockState)openNorth.setValue(PortedBlocks.HORIZONTAL_FACING, Direction.EAST)).setValue(PortedBlocks.OPEN, true);
+      VoxelShape openEastCollision = openEast.getCollisionShape(helper.getLevel(), helper.absolutePos(LOWER_POS));
+      assertShapeDoesNotIntersect(
+         helper, openEastCollision, 7.25, 4.0, 4.0, 8.75, 12.0, 12.0, "rotated open fence gate should clear its center passage"
+      );
+      assertShapeIntersects(helper, openEastCollision, 7.0, 4.0, 12.5, 9.0, 12.0, 15.5, "rotated open fence gate should keep collision on its folded side leaf");
       helper.succeed();
    }
 
@@ -154,6 +181,52 @@ public final class AccesswayBlockGameTests {
    }
 
    @GameTest(template = "empty", timeoutTicks = 40)
+   public static void open_iron_hatch_collision_matches_visible_side_plate(GameTestHelper helper) {
+      Block hatch = (Block)ModBlocks.IRON_HATCH.get();
+      BlockState openNorth = (BlockState)((BlockState)hatch.defaultBlockState().setValue(PortedBlocks.HORIZONTAL_FACING, Direction.NORTH))
+         .setValue(PortedBlocks.OPEN, true);
+      VoxelShape collision = openNorth.getCollisionShape(helper.getLevel(), helper.absolutePos(LOWER_POS));
+      assertShapeBounds(helper, collision, 0.0, 0.0, 0.0, 16.0, 16.0, 2.0, "open north iron hatch collision should match its visible side plate");
+      assertShapeIntersects(helper, collision, 1.0, 4.0, 0.25, 15.0, 12.0, 1.75, "open iron hatch should collide with its visible side plate");
+      assertShapeDoesNotIntersect(helper, collision, 1.0, 4.0, 4.0, 15.0, 12.0, 12.0, "open iron hatch should not block the center passage");
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 40)
+   public static void slab_and_slab_slice_collision_matches_visible_height(GameTestHelper helper) {
+      Block slab = (Block)ModBlocks.OLD_INDUSTRIAL_WOOD_SLAB.get();
+      assertShapeBounds(
+         helper,
+         slab.defaultBlockState().setValue(SlabBlock.TYPE, SlabType.BOTTOM).getCollisionShape(helper.getLevel(), helper.absolutePos(LOWER_POS)),
+         0.0,
+         0.0,
+         0.0,
+         16.0,
+         8.0,
+         16.0,
+         "bottom slab collision should be half-height"
+      );
+      assertShapeBounds(
+         helper,
+         slab.defaultBlockState().setValue(SlabBlock.TYPE, SlabType.TOP).getCollisionShape(helper.getLevel(), helper.absolutePos(LOWER_POS)),
+         0.0,
+         8.0,
+         0.0,
+         16.0,
+         16.0,
+         16.0,
+         "top slab collision should occupy the upper half"
+      );
+
+      Block slice = (Block)ModBlocks.OLD_INDUSTRIAL_WOOD_SLABSLICE.get();
+      VoxelShape midSliceCollision = slice.defaultBlockState()
+         .setValue(PortedBlocks.PARTS, 7)
+         .getCollisionShape(helper.getLevel(), helper.absolutePos(LOWER_POS));
+      assertShapeBounds(helper, midSliceCollision, 0.0, 7.0, 0.0, 16.0, 9.0, 16.0, "slab-slice collision should match the selected visible slice");
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 40)
    public static void metal_rung_ladders_are_marked_climbable(GameTestHelper helper) {
       assertClimbable(helper, ModBlocks.METAL_RUNG_LADDER.get(), "metal rung ladder");
       assertClimbable(helper, ModBlocks.METAL_RUNG_STEPS.get(), "staggered metal steps");
@@ -225,6 +298,71 @@ public final class AccesswayBlockGameTests {
       helper.succeed();
    }
 
+   @GameTest(template = "empty", timeoutTicks = 80)
+   public static void metal_sliding_doors_pair_only_two_adjacent_doors(GameTestHelper helper) {
+      Player player = helper.makeMockPlayer(GameType.CREATIVE);
+      DoorBlock door = (DoorBlock)ModBlocks.METAL_SLIDING_DOOR.get();
+      BlockPos leftDoorPos = new BlockPos(3, 1, 3);
+      BlockState firstDoor = placeDoorFromItem(helper, player, door, leftDoorPos);
+      Direction facing = firstDoor.getValue(DoorBlock.FACING);
+      BlockPos rightDoorPos = leftDoorPos.relative(facing.getClockWise());
+      BlockPos thirdDoorPos = rightDoorPos.relative(facing.getClockWise());
+
+      placeDoorFromItem(helper, player, door, rightDoorPos);
+      placeDoorFromItem(helper, player, door, thirdDoorPos);
+
+      assertSlidingPairSide(helper, leftDoorPos, PortedBlocks.SlidingDoorPairSide.LEFT, "left metal sliding door");
+      assertSlidingPairSide(helper, rightDoorPos, PortedBlocks.SlidingDoorPairSide.RIGHT, "right metal sliding door");
+      assertSlidingPairSide(helper, thirdDoorPos, PortedBlocks.SlidingDoorPairSide.SINGLE, "third adjacent metal sliding door");
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 80)
+   public static void metal_sliding_door_pair_toggles_from_either_half(GameTestHelper helper) {
+      Player player = helper.makeMockPlayer(GameType.CREATIVE);
+      DoorBlock door = (DoorBlock)ModBlocks.METAL_SLIDING_DOOR.get();
+      BlockPos leftDoorPos = new BlockPos(3, 1, 3);
+      Direction facing = placeDoorFromItem(helper, player, door, leftDoorPos).getValue(DoorBlock.FACING);
+      BlockPos rightDoorPos = leftDoorPos.relative(facing.getClockWise());
+      placeDoorFromItem(helper, player, door, rightDoorPos);
+
+      helper.useBlock(rightDoorPos.above(), player);
+      assertDoorState(helper, leftDoorPos, true, false, "left metal sliding door should open from paired upper-half use");
+      assertDoorState(helper, rightDoorPos, true, false, "right metal sliding door should open from paired upper-half use");
+
+      helper.useBlock(leftDoorPos, player);
+      assertDoorState(helper, leftDoorPos, false, false, "left metal sliding door should close from paired lower-half use");
+      assertDoorState(helper, rightDoorPos, false, false, "right metal sliding door should close from paired lower-half use");
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 120)
+   public static void metal_sliding_door_pair_redstone_does_not_chain(GameTestHelper helper) {
+      Player player = helper.makeMockPlayer(GameType.CREATIVE);
+      DoorBlock door = (DoorBlock)ModBlocks.METAL_SLIDING_DOOR.get();
+      BlockPos leftDoorPos = new BlockPos(3, 1, 3);
+      Direction facing = placeDoorFromItem(helper, player, door, leftDoorPos).getValue(DoorBlock.FACING);
+      BlockPos rightDoorPos = leftDoorPos.relative(facing.getClockWise());
+      BlockPos thirdDoorPos = rightDoorPos.relative(facing.getClockWise());
+      placeDoorFromItem(helper, player, door, rightDoorPos);
+      placeDoorFromItem(helper, player, door, thirdDoorPos);
+
+      BlockPos powerPos = leftDoorPos.relative(facing.getOpposite());
+      helper.setBlock(powerPos, Blocks.REDSTONE_BLOCK);
+      helper.runAfterDelay(2L, () -> {
+         assertDoorPoweredOpen(helper, leftDoorPos, "powered left metal sliding door");
+         assertDoorPoweredOpen(helper, rightDoorPos, "paired right metal sliding door");
+         assertDoorState(helper, thirdDoorPos, false, false, "third metal sliding door should not receive chained pair power");
+         helper.setBlock(powerPos, Blocks.AIR);
+         helper.runAfterDelay(2L, () -> {
+            assertDoorState(helper, leftDoorPos, false, false, "left metal sliding door should close after pair power is removed");
+            assertDoorState(helper, rightDoorPos, false, false, "right metal sliding door should close after pair power is removed");
+            assertDoorState(helper, thirdDoorPos, false, false, "third metal sliding door should remain closed after pair power is removed");
+            helper.succeed();
+         });
+      });
+   }
+
    private static void assertSlicePlacementPart(GameTestHelper helper, Player player, Block block, double localY, int expectedPart, String message) {
       BlockState state = placementState(helper, player, block, LOWER_POS, localY);
       helper.assertTrue(state != null, "slab slice placement state should not be null");
@@ -241,6 +379,19 @@ public final class AccesswayBlockGameTests {
       BlockHitResult hit = new BlockHitResult(hitLocation, face, absolutePos, false);
       BlockPlaceContext context = new BlockPlaceContext(helper.getLevel(), player, InteractionHand.MAIN_HAND, new ItemStack(block), hit);
       return block.getStateForPlacement(context);
+   }
+
+   private static BlockState placeDoorFromItem(GameTestHelper helper, Player player, DoorBlock door, BlockPos lowerPos) {
+      BlockPos absolutePos = helper.absolutePos(lowerPos);
+      Vec3 hitLocation = new Vec3(absolutePos.getX() + 0.5, absolutePos.getY() + 0.5, absolutePos.getZ() + 0.5);
+      BlockHitResult hit = new BlockHitResult(hitLocation, Direction.UP, absolutePos, false);
+      ItemStack stack = new ItemStack(door);
+      BlockPlaceContext context = new BlockPlaceContext(helper.getLevel(), player, InteractionHand.MAIN_HAND, stack, hit);
+      BlockState state = door.getStateForPlacement(context);
+      helper.assertTrue(state != null, "metal sliding door placement state should not be null");
+      helper.getLevel().setBlock(absolutePos, state, 3);
+      door.setPlacedBy(helper.getLevel(), absolutePos, state, player, stack);
+      return helper.getBlockState(lowerPos);
    }
 
    private static void assertClimbable(GameTestHelper helper, Block block, String name) {
@@ -261,10 +412,21 @@ public final class AccesswayBlockGameTests {
    }
 
    private static void assertDoorPoweredOpen(GameTestHelper helper, BlockPos lowerPos, String name) {
-      helper.assertBlockProperty(lowerPos, DoorBlock.POWERED, true);
-      helper.assertBlockProperty(lowerPos, DoorBlock.OPEN, true);
-      helper.assertBlockProperty(lowerPos.above(), DoorBlock.POWERED, true);
-      helper.assertBlockProperty(lowerPos.above(), DoorBlock.OPEN, true);
+      assertDoorState(helper, lowerPos, true, true, name);
+   }
+
+   private static void assertDoorState(GameTestHelper helper, BlockPos lowerPos, boolean open, boolean powered, String name) {
+      helper.assertBlockProperty(lowerPos, DoorBlock.POWERED, powered);
+      helper.assertBlockProperty(lowerPos, DoorBlock.OPEN, open);
+      helper.assertBlockProperty(lowerPos.above(), DoorBlock.POWERED, powered);
+      helper.assertBlockProperty(lowerPos.above(), DoorBlock.OPEN, open);
+   }
+
+   private static void assertSlidingPairSide(
+      GameTestHelper helper, BlockPos lowerPos, PortedBlocks.SlidingDoorPairSide pairSide, String name
+   ) {
+      helper.assertBlockProperty(lowerPos, PortedBlocks.PAIR_SIDE, pairSide);
+      helper.assertBlockProperty(lowerPos.above(), PortedBlocks.PAIR_SIDE, pairSide);
    }
 
    private static void assertShapeBounds(

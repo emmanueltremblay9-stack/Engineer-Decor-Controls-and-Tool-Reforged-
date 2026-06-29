@@ -72,10 +72,10 @@ public final class ControlsModule {
       "rustic_spring_reset_chain"
    );
    private static final Set<String> SENSITIVE_GLASS = Set.of("orange_sensitiveglass", "sensitive_glass_block", "stained_sensitiveglass");
-   private static final Set<String> SWITCHLINK_RECEIVERS = Set.of(
-      "industrial_switchlink_cased_receiver", "industrial_switchlink_receiver", "industrial_switchlink_receiver_analog"
-   );
-   private static final Set<String> SWITCHLINK_PULSE_RECEIVERS = Set.of("industrial_switchlink_cased_pulse_receiver", "industrial_switchlink_pulse_receiver");
+   private static final Set<String> SWITCHLINK_RECEIVERS = Set.of("industrial_switchlink_receiver", "industrial_switchlink_receiver_analog");
+   private static final Set<String> SWITCHLINK_CASED_RECEIVERS = Set.of("industrial_switchlink_cased_receiver");
+   private static final Set<String> SWITCHLINK_PULSE_RECEIVERS = Set.of("industrial_switchlink_pulse_receiver");
+   private static final Set<String> SWITCHLINK_CASED_PULSE_RECEIVERS = Set.of("industrial_switchlink_cased_pulse_receiver");
    private static final List<DeferredBlock<? extends Block>> MUTABLE_CONTROLS = new ArrayList<>();
    public static final List<DeferredBlock<? extends Block>> CONTROLS = Collections.unmodifiableList(MUTABLE_CONTROLS);
    public static final DeferredItem<Item> SWITCHLINK_PEARL = ModItems.registerItem("switchlink_pearl", () -> new SwitchLinkPearlItem(new Properties()));
@@ -207,8 +207,12 @@ public final class ControlsModule {
             return () -> new ControlsBlockTypes.PulseSwitchBlock(controlProperties(), 25);
          } else if (SENSITIVE_GLASS.contains(name)) {
             return () -> new ControlsBlockTypes.SensitiveGlassBlock(glassProperties());
+         } else if (SWITCHLINK_CASED_RECEIVERS.contains(name)) {
+            return () -> new ControlsBlockTypes.CasedSwitchLinkReceiverBlock(controlProperties());
          } else if (SWITCHLINK_RECEIVERS.contains(name)) {
             return () -> new ControlsBlockTypes.SwitchLinkReceiverBlock(controlProperties());
+         } else if (SWITCHLINK_CASED_PULSE_RECEIVERS.contains(name)) {
+            return () -> new ControlsBlockTypes.CasedSwitchLinkPulseReceiverBlock(controlProperties());
          } else if (SWITCHLINK_PULSE_RECEIVERS.contains(name)) {
             return () -> new ControlsBlockTypes.SwitchLinkPulseReceiverBlock(controlProperties());
          } else if ("elevator_button".equals(name)) {

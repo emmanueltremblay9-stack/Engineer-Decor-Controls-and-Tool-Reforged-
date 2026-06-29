@@ -12,7 +12,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 public final class ModMenus {
-   public static final DeferredRegister<MenuType<?>> MENU_TYPES = DeferredRegister.create(Registries.MENU, "engineers_decor_reforged");
+   public static final DeferredRegister<MenuType<?>> MENU_TYPES = DeferredRegister.create(Registries.MENU, "immersive_engineer_decor_controls_tool_reforged");
    private static final Map<MachineKind, DeferredHolder<MenuType<?>, MenuType<MachineMenu>>> MACHINE_TYPES = new EnumMap<>(MachineKind.class);
    public static final DeferredHolder<MenuType<?>, MenuType<MachineMenu>> METAL_CRAFTING_TABLE = registerMachine(
       "metal_crafting_table_menu", MachineKind.METAL_CRAFTING_TABLE

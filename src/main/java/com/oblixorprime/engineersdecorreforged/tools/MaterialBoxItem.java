@@ -31,7 +31,7 @@ public class MaterialBoxItem extends TooltipItem {
    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
       ItemStack box = player.getItemInHand(hand);
       if (hand != InteractionHand.MAIN_HAND) {
-         return fail(level, player, box, "item.engineers_decor_reforged.material_box.msg.mainhand");
+         return fail(level, player, box, "item.immersive_engineer_decor_controls_tool_reforged.material_box.msg.mainhand");
       }
 
       ItemStack offhand = player.getOffhandItem();
@@ -45,7 +45,7 @@ public class MaterialBoxItem extends TooltipItem {
       Item item = storedItem(stack);
       if (count > 0 && item != Items.AIR) {
          tooltip.add(
-            Component.translatable("item.engineers_decor_reforged.material_box.tip.contents", new Object[]{count, item.getDescription()})
+            Component.translatable("item.immersive_engineer_decor_controls_tool_reforged.material_box.tip.contents", new Object[]{count, item.getDescription()})
                .withStyle(ChatFormatting.AQUA)
          );
       }
@@ -53,28 +53,28 @@ public class MaterialBoxItem extends TooltipItem {
 
    private static InteractionResultHolder<ItemStack> store(Level level, Player player, ItemStack box, ItemStack source) {
       if (source.is(box.getItem()) || !source.isStackable()) {
-         return fail(level, player, box, "item.engineers_decor_reforged.material_box.msg.unsupported");
+         return fail(level, player, box, "item.immersive_engineer_decor_controls_tool_reforged.material_box.msg.unsupported");
       }
 
       if (!source.getComponentsPatch().isEmpty()) {
-         return fail(level, player, box, "item.engineers_decor_reforged.material_box.msg.modified");
+         return fail(level, player, box, "item.immersive_engineer_decor_controls_tool_reforged.material_box.msg.modified");
       }
 
       Item stored = storedItem(box);
       int count = storedCount(box);
       if (count > 0 && stored != source.getItem()) {
-         return fail(level, player, box, "item.engineers_decor_reforged.material_box.msg.mismatch");
+         return fail(level, player, box, "item.immersive_engineer_decor_controls_tool_reforged.material_box.msg.mismatch");
       }
 
       int moving = Math.min(source.getCount(), 512 - count);
       if (moving <= 0) {
-         return fail(level, player, box, "item.engineers_decor_reforged.material_box.msg.full");
+         return fail(level, player, box, "item.immersive_engineer_decor_controls_tool_reforged.material_box.msg.full");
       }
 
       if (!level.isClientSide) {
          setStored(box, source.getItem(), count + moving);
          source.shrink(moving);
-         player.displayClientMessage(Component.translatable("item.engineers_decor_reforged.material_box.msg.stored", new Object[]{moving}), true);
+         player.displayClientMessage(Component.translatable("item.immersive_engineer_decor_controls_tool_reforged.material_box.msg.stored", new Object[]{moving}), true);
       }
 
       return InteractionResultHolder.success(box);
@@ -82,7 +82,7 @@ public class MaterialBoxItem extends TooltipItem {
 
    private static InteractionResultHolder<ItemStack> retrieve(Level level, Player player, ItemStack box) {
       if (!player.getOffhandItem().isEmpty()) {
-         return fail(level, player, box, "item.engineers_decor_reforged.material_box.msg.offhand_full");
+         return fail(level, player, box, "item.immersive_engineer_decor_controls_tool_reforged.material_box.msg.offhand_full");
       }
 
       int count = storedCount(box);
@@ -92,12 +92,12 @@ public class MaterialBoxItem extends TooltipItem {
          if (!level.isClientSide) {
             player.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(item, moving));
             setStored(box, item, count - moving);
-            player.displayClientMessage(Component.translatable("item.engineers_decor_reforged.material_box.msg.retrieved", new Object[]{moving}), true);
+            player.displayClientMessage(Component.translatable("item.immersive_engineer_decor_controls_tool_reforged.material_box.msg.retrieved", new Object[]{moving}), true);
          }
 
          return InteractionResultHolder.success(box);
       } else {
-         return fail(level, player, box, "item.engineers_decor_reforged.material_box.msg.empty");
+         return fail(level, player, box, "item.immersive_engineer_decor_controls_tool_reforged.material_box.msg.empty");
       }
    }
 

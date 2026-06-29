@@ -14,7 +14,7 @@ public class TooltipItem extends Item {
 
    public TooltipItem(String itemName, Properties properties) {
       super(properties);
-      this.helpKey = "item.engineers_decor_reforged." + itemName + ".help";
+      this.helpKey = "item.immersive_engineer_decor_controls_tool_reforged." + itemName + ".help";
    }
 
    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {

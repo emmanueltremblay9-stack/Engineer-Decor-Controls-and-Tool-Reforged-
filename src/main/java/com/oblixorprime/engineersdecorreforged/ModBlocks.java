@@ -21,7 +21,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.DeferredRegister.Blocks;
 
 public final class ModBlocks {
-   public static final Blocks BLOCKS = DeferredRegister.createBlocks("engineers_decor_reforged");
+   public static final Blocks BLOCKS = DeferredRegister.createBlocks("immersive_engineer_decor_controls_tool_reforged");
    private static final List<DeferredBlock<? extends Block>> MUTABLE_ORDERED_BLOCKS = new ArrayList<>();
    public static final List<DeferredBlock<? extends Block>> ORDERED_BLOCKS = Collections.unmodifiableList(MUTABLE_ORDERED_BLOCKS);
    public static final DeferredBlock<Block> CLINKER_BRICK_BLOCK = registerWithItem("clinker_brick_block", () -> new Block(stone(0.5F, 7.0F)));

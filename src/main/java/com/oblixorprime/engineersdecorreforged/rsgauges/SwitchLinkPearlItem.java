@@ -5,6 +5,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
@@ -123,7 +124,10 @@ public class SwitchLinkPearlItem extends Item {
 
    private static boolean hasLink(ItemStack stack) {
       CompoundTag tag = linkTag(stack);
-      return tag.contains("target_dimension") && tag.contains("target_x") && tag.contains("target_y") && tag.contains("target_z");
+      return tag.contains(TAG_DIMENSION, Tag.TAG_STRING)
+         && tag.contains(TAG_X, Tag.TAG_INT)
+         && tag.contains(TAG_Y, Tag.TAG_INT)
+         && tag.contains(TAG_Z, Tag.TAG_INT);
    }
 
    private static BlockPos targetPos(CompoundTag tag) {

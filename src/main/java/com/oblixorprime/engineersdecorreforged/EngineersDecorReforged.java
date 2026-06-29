@@ -7,6 +7,7 @@ import com.oblixorprime.engineersdecorreforged.tools.EngineerToolsModule;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.ItemStack;
@@ -25,15 +26,16 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.slf4j.Logger;
 
-@Mod("engineers_decor_reforged")
+@Mod("immersive_engineer_decor_controls_tool_reforged")
 public final class EngineersDecorReforged {
-   public static final String MOD_ID = "engineers_decor_reforged";
+   public static final String MOD_ID = "immersive_engineer_decor_controls_tool_reforged";
+   public static final String LEGACY_MOD_ID = "engineers_decor_reforged";
    public static final Logger LOGGER = LogUtils.getLogger();
-   private static final DeferredRegister<CreativeModeTab> CREATIVE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, "engineers_decor_reforged");
+   private static final DeferredRegister<CreativeModeTab> CREATIVE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, "immersive_engineer_decor_controls_tool_reforged");
    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MAIN_TAB = CREATIVE_TABS.register(
       "main",
       () -> CreativeModeTab.builder()
-         .title(Component.translatable("itemGroup.engineers_decor_reforged"))
+         .title(Component.translatable("itemGroup.immersive_engineer_decor_controls_tool_reforged"))
          .withTabsBefore(new ResourceKey[]{CreativeModeTabs.BUILDING_BLOCKS})
          .icon(() -> new ItemStack((ItemLike)ModBlocks.CLINKER_BRICK_BLOCK.get()))
          .displayItems((parameters, output) -> ModItems.ORDERED_ITEMS.forEach(item -> output.accept((ItemLike)item.get())))
@@ -44,6 +46,7 @@ public final class EngineersDecorReforged {
       NeoForgeMod.enableMilkFluid();
       ControlsModule.init();
       EngineerToolsModule.init();
+      addLegacyRegistryAliases();
       ModBlocks.BLOCKS.register(modEventBus);
       ModItems.ITEMS.register(modEventBus);
       ModBlockEntities.BLOCK_ENTITY_TYPES.register(modEventBus);
@@ -54,6 +57,19 @@ public final class EngineersDecorReforged {
       modEventBus.addListener(this::registerCapabilities);
       modEventBus.addListener(ModNetworking::register);
       modContainer.registerConfig(Type.COMMON, ReforgedConfig.SPEC);
+   }
+
+   private static void addLegacyRegistryAliases() {
+      ModBlocks.BLOCKS.getEntries().forEach(holder -> ModBlocks.BLOCKS.addAlias(legacyId(holder.getId()), holder.getId()));
+      ModItems.ITEMS.getEntries().forEach(holder -> ModItems.ITEMS.addAlias(legacyId(holder.getId()), holder.getId()));
+      ModBlockEntities.BLOCK_ENTITY_TYPES.addAlias(legacyId(ModBlockEntities.MACHINE.getId()), ModBlockEntities.MACHINE.getId());
+      ModMenus.machineTypes().values().forEach(holder -> ModMenus.MENU_TYPES.addAlias(legacyId(holder.getId()), holder.getId()));
+      ModRecipeSerializers.RECIPE_SERIALIZERS.addAlias(legacyId(ModRecipeSerializers.REDIA_TOOL_REPAIR.getId()), ModRecipeSerializers.REDIA_TOOL_REPAIR.getId());
+      CREATIVE_TABS.addAlias(legacyId(MAIN_TAB.getId()), MAIN_TAB.getId());
+   }
+
+   private static ResourceLocation legacyId(ResourceLocation currentId) {
+      return ResourceLocation.fromNamespaceAndPath(LEGACY_MOD_ID, currentId.getPath());
    }
 
    private void commonSetup(FMLCommonSetupEvent event) {

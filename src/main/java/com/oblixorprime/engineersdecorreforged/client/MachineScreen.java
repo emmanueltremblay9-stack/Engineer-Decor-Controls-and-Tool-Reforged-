@@ -417,7 +417,7 @@ public abstract class MachineScreen extends AbstractContainerScreen<MachineMenu>
    }
 
    private ResourceLocation backgroundTexture(MachineLayout layout) {
-      return ResourceLocation.fromNamespaceAndPath("engineers_decor_reforged", "textures/gui/" + layout.textureName() + ".png");
+      return ResourceLocation.fromNamespaceAndPath("immersive_engineer_decor_controls_tool_reforged", "textures/gui/" + layout.textureName() + ".png");
    }
 
    private void drawCraftingFlow(GuiGraphics graphics, int x, int y) {
@@ -633,50 +633,50 @@ public abstract class MachineScreen extends AbstractContainerScreen<MachineMenu>
 
    private Component slotTooltip(MachineLayout.MachineSlot slot) {
       return (Component)(switch (((MachineMenu)this.menu).kind()) {
-         case FACTORY_HOPPER -> Component.translatable("block.engineers_decor_reforged.factory_hopper.slots.storage");
+         case FACTORY_HOPPER -> Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.factory_hopper.slots.storage");
          case FACTORY_DROPPER -> Component.translatable(
             slot.containerIndex() < 12
-               ? "block.engineers_decor_reforged.factory_dropper.slots.input"
-               : "block.engineers_decor_reforged.factory_dropper.slots.filter"
+               ? "block.immersive_engineer_decor_controls_tool_reforged.factory_dropper.slots.input"
+               : "block.immersive_engineer_decor_controls_tool_reforged.factory_dropper.slots.filter"
          );
-         case FACTORY_PLACER -> Component.translatable("block.engineers_decor_reforged.factory_placer.slots.blocks");
+         case FACTORY_PLACER -> Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.factory_placer.slots.blocks");
          case SMALL_LAB_FURNACE -> this.labFurnaceSlotTooltip(slot.containerIndex());
          case SMALL_ELECTRICAL_FURNACE -> this.electricalFurnaceSlotTooltip(slot.containerIndex());
          case METAL_CRAFTING_TABLE -> this.metalCraftingTableSlotTooltip(slot.containerIndex());
-         case SMALL_WASTE_INCINERATOR -> Component.translatable("block.engineers_decor_reforged.small_waste_incinerator.slots.queue");
+         case SMALL_WASTE_INCINERATOR -> Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.small_waste_incinerator.slots.queue");
          default -> Component.literal(slot.role());
       });
    }
 
    private Component metalCraftingTableSlotTooltip(int index) {
       return switch (index) {
-         case 0 -> Component.translatable("block.engineers_decor_reforged.metal_crafting_table.slots.hammer");
-         case 10 -> Component.translatable("block.engineers_decor_reforged.metal_crafting_table.slots.output");
-         default -> Component.translatable("block.engineers_decor_reforged.metal_crafting_table.slots.grid");
+         case 0 -> Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.metal_crafting_table.slots.hammer");
+         case 10 -> Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.metal_crafting_table.slots.output");
+         default -> Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.metal_crafting_table.slots.grid");
       };
    }
 
    private Component labFurnaceSlotTooltip(int index) {
       return switch (index) {
-         case 0 -> Component.translatable("block.engineers_decor_reforged.small_lab_furnace.slots.input");
-         case 1 -> Component.translatable("block.engineers_decor_reforged.small_lab_furnace.slots.fuel");
-         case 2 -> Component.translatable("block.engineers_decor_reforged.small_lab_furnace.slots.output");
-         case 3, 4 -> Component.translatable("block.engineers_decor_reforged.small_lab_furnace.slots.input_fifo");
-         case 5, 6 -> Component.translatable("block.engineers_decor_reforged.small_lab_furnace.slots.fuel_fifo");
-         case 7, 8 -> Component.translatable("block.engineers_decor_reforged.small_lab_furnace.slots.output_fifo");
-         case 9, 10 -> Component.translatable("block.engineers_decor_reforged.small_lab_furnace.slots.aux");
-         default -> Component.translatable("block.engineers_decor_reforged.machine.slots.generic");
+         case 0 -> Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.small_lab_furnace.slots.input");
+         case 1 -> Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.small_lab_furnace.slots.fuel");
+         case 2 -> Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.small_lab_furnace.slots.output");
+         case 3, 4 -> Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.small_lab_furnace.slots.input_fifo");
+         case 5, 6 -> Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.small_lab_furnace.slots.fuel_fifo");
+         case 7, 8 -> Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.small_lab_furnace.slots.output_fifo");
+         case 9, 10 -> Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.small_lab_furnace.slots.aux");
+         default -> Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.machine.slots.generic");
       };
    }
 
    private Component electricalFurnaceSlotTooltip(int index) {
       return switch (index) {
-         case 0 -> Component.translatable("block.engineers_decor_reforged.small_electrical_furnace.slots.input");
-         case 1 -> Component.translatable("block.engineers_decor_reforged.small_electrical_furnace.slots.aux");
-         case 2 -> Component.translatable("block.engineers_decor_reforged.small_electrical_furnace.slots.output");
-         case 3, 4 -> Component.translatable("block.engineers_decor_reforged.small_electrical_furnace.slots.input_fifo");
-         case 5, 6 -> Component.translatable("block.engineers_decor_reforged.small_electrical_furnace.slots.output_fifo");
-         default -> Component.translatable("block.engineers_decor_reforged.machine.slots.generic");
+         case 0 -> Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.small_electrical_furnace.slots.input");
+         case 1 -> Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.small_electrical_furnace.slots.aux");
+         case 2 -> Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.small_electrical_furnace.slots.output");
+         case 3, 4 -> Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.small_electrical_furnace.slots.input_fifo");
+         case 5, 6 -> Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.small_electrical_furnace.slots.output_fifo");
+         default -> Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.machine.slots.generic");
       };
    }
 
@@ -698,42 +698,42 @@ public abstract class MachineScreen extends AbstractContainerScreen<MachineMenu>
 
    private Component factoryHopperTooltip(double mouseX, double mouseY) {
       if (this.isHovering(128, 9, 44, 10, mouseX, mouseY)) {
-         return Component.translatable("block.engineers_decor_reforged.factory_hopper.tooltips.range");
+         return Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.factory_hopper.tooltips.range");
       } else if (this.isHovering(145, 20, 8, 8, mouseX, mouseY)) {
-         return Component.translatable("block.engineers_decor_reforged.factory_hopper.tooltips.delayindicator");
+         return Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.factory_hopper.tooltips.delayindicator");
       } else if (this.isHovering(128, 21, 44, 10, mouseX, mouseY)) {
-         return Component.translatable("block.engineers_decor_reforged.factory_hopper.tooltips.period");
+         return Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.factory_hopper.tooltips.period");
       } else if (this.isHovering(128, 34, 44, 10, mouseX, mouseY)) {
-         return Component.translatable("block.engineers_decor_reforged.factory_hopper.tooltips.count");
+         return Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.factory_hopper.tooltips.count");
       } else if (this.isHovering(133, 49, 9, 9, mouseX, mouseY)) {
-         return Component.translatable("block.engineers_decor_reforged.factory_hopper.tooltips.rssignal");
+         return Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.factory_hopper.tooltips.rssignal");
       } else if (this.isHovering(145, 49, 9, 9, mouseX, mouseY)) {
-         return Component.translatable("block.engineers_decor_reforged.factory_hopper.tooltips.inversion");
+         return Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.factory_hopper.tooltips.inversion");
       } else {
          return this.isHovering(159, 49, 7, 9, mouseX, mouseY)
-            ? Component.translatable("block.engineers_decor_reforged.factory_hopper.tooltips.triggermode")
+            ? Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.factory_hopper.tooltips.triggermode")
             : null;
       }
    }
 
    private Component factoryDropperTooltip(double mouseX, double mouseY) {
       if (this.isHovering(130, 10, 12, 25, mouseX, mouseY)) {
-         return Component.translatable("block.engineers_decor_reforged.factory_dropper.tooltips.velocity");
+         return Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.factory_dropper.tooltips.velocity");
       } else if (this.isHovering(145, 10, 25, 25, mouseX, mouseY)) {
-         return Component.translatable("block.engineers_decor_reforged.factory_dropper.tooltips.direction");
+         return Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.factory_dropper.tooltips.direction");
       } else if (this.isHovering(129, 40, 44, 10, mouseX, mouseY)) {
-         return Component.translatable("block.engineers_decor_reforged.factory_dropper.tooltips.dropcount");
+         return Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.factory_dropper.tooltips.dropcount");
       } else if (this.isHovering(129, 50, 44, 10, mouseX, mouseY)) {
-         return Component.translatable("block.engineers_decor_reforged.factory_dropper.tooltips.period");
+         return Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.factory_dropper.tooltips.period");
       } else if (this.isHovering(114, 51, 9, 9, mouseX, mouseY)) {
-         return Component.translatable("block.engineers_decor_reforged.factory_dropper.tooltips.rssignal");
+         return Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.factory_dropper.tooltips.rssignal");
       } else if (this.isHovering(132, 66, 9, 9, mouseX, mouseY)) {
-         return Component.translatable("block.engineers_decor_reforged.factory_dropper.tooltips.filtergate");
+         return Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.factory_dropper.tooltips.filtergate");
       } else if (this.isHovering(148, 66, 9, 9, mouseX, mouseY)) {
-         return Component.translatable("block.engineers_decor_reforged.factory_dropper.tooltips.externgate");
+         return Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.factory_dropper.tooltips.externgate");
       } else {
          return this.isHovering(162, 66, 7, 9, mouseX, mouseY)
-            ? Component.translatable("block.engineers_decor_reforged.factory_dropper.tooltips.triggermode")
+            ? Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.factory_dropper.tooltips.triggermode")
             : null;
       }
    }
@@ -742,9 +742,9 @@ public abstract class MachineScreen extends AbstractContainerScreen<MachineMenu>
       MachineScreen.FactoryPlacerButton button = this.factoryPlacerButtonAt(mouseX, mouseY);
       if (button != null) {
          return switch (button) {
-            case REDSTONE_SIGNAL -> Component.translatable("block.engineers_decor_reforged.factory_placer.tooltips.rssignal");
-            case INVERSION -> Component.translatable("block.engineers_decor_reforged.factory_placer.tooltips.inversion");
-            case TRIGGER_MODE -> Component.translatable("block.engineers_decor_reforged.factory_placer.tooltips.triggermode");
+            case REDSTONE_SIGNAL -> Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.factory_placer.tooltips.rssignal");
+            case INVERSION -> Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.factory_placer.tooltips.inversion");
+            case TRIGGER_MODE -> Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.factory_placer.tooltips.triggermode");
          };
       } else {
          MachineScreen.FactoryPlacerLine line = this.factoryPlacerLineAt(mouseX, mouseY);
@@ -754,34 +754,34 @@ public abstract class MachineScreen extends AbstractContainerScreen<MachineMenu>
 
    private Component labFurnaceTooltip(double mouseX, double mouseY) {
       if (this.isHovering(59, 35, 18, 18, mouseX, mouseY)) {
-         return Component.translatable("block.engineers_decor_reforged.small_lab_furnace.tooltips.flame");
+         return Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.small_lab_furnace.tooltips.flame");
       } else {
          return this.isHovering(78, 37, 22, 18, mouseX, mouseY)
-            ? Component.translatable("block.engineers_decor_reforged.small_lab_furnace.tooltips.progress")
+            ? Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.small_lab_furnace.tooltips.progress")
             : null;
       }
    }
 
    private Component electricalFurnaceTooltip(double mouseX, double mouseY) {
       if (this.isHovering(62, 54, 14, 15, mouseX, mouseY)) {
-         return Component.translatable("block.engineers_decor_reforged.small_electrical_furnace.tooltips.heat");
+         return Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.small_electrical_furnace.tooltips.heat");
       } else if (this.isHovering(78, 28, 22, 18, mouseX, mouseY)) {
-         return Component.translatable("block.engineers_decor_reforged.small_electrical_furnace.tooltips.progress");
+         return Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.small_electrical_furnace.tooltips.progress");
       } else if (this.isHovering(89, 52, 35, 17, mouseX, mouseY)) {
-         return Component.translatable("block.engineers_decor_reforged.small_electrical_furnace.tooltips.energy");
+         return Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.small_electrical_furnace.tooltips.energy");
       } else {
          return this.isHovering(134, 48, 30, 28, mouseX, mouseY)
-            ? Component.translatable("block.engineers_decor_reforged.small_electrical_furnace.tooltips.speed")
+            ? Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.small_electrical_furnace.tooltips.speed")
             : null;
       }
    }
 
    private Component wasteIncineratorTooltip(double mouseX, double mouseY) {
       if (this.isHovering(10, 49, 31, 27, mouseX, mouseY)) {
-         return Component.translatable("block.engineers_decor_reforged.small_waste_incinerator.tooltips.firebox");
+         return Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.small_waste_incinerator.tooltips.firebox");
       } else {
          return this.isHovering(8, 5, 160, 72, mouseX, mouseY)
-            ? Component.translatable("block.engineers_decor_reforged.small_waste_incinerator.tooltips.queue")
+            ? Component.translatable("block.immersive_engineer_decor_controls_tool_reforged.small_waste_incinerator.tooltips.queue")
             : null;
       }
    }
@@ -897,9 +897,9 @@ public abstract class MachineScreen extends AbstractContainerScreen<MachineMenu>
    }
 
    private enum FactoryPlacerLine {
-      TOP(0, 6, 13, "block.engineers_decor_reforged.factory_placer.tooltips.stock_row_top"),
-      MIDDLE(1, 20, 13, "block.engineers_decor_reforged.factory_placer.tooltips.stock_row_middle"),
-      BOTTOM(2, 34, 10, "block.engineers_decor_reforged.factory_placer.tooltips.stock_row_bottom");
+      TOP(0, 6, 13, "block.immersive_engineer_decor_controls_tool_reforged.factory_placer.tooltips.stock_row_top"),
+      MIDDLE(1, 20, 13, "block.immersive_engineer_decor_controls_tool_reforged.factory_placer.tooltips.stock_row_middle"),
+      BOTTOM(2, 34, 10, "block.immersive_engineer_decor_controls_tool_reforged.factory_placer.tooltips.stock_row_bottom");
 
       private final int row;
       private final int y;

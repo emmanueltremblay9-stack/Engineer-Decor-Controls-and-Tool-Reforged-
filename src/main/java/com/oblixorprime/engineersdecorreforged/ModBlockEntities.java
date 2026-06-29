@@ -10,7 +10,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 public final class ModBlockEntities {
    public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES = DeferredRegister.create(
-      Registries.BLOCK_ENTITY_TYPE, "engineers_decor_reforged"
+      Registries.BLOCK_ENTITY_TYPE, "immersive_engineer_decor_controls_tool_reforged"
    );
    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MachineBlockEntity>> MACHINE = BLOCK_ENTITY_TYPES.register(
       "machine",

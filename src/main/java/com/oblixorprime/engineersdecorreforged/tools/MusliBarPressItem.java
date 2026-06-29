@@ -20,7 +20,7 @@ import net.minecraft.world.level.Level;
 public class MusliBarPressItem extends TooltipItem {
    private static final int OUTPUT_COUNT = 4;
    public static final TagKey<Item> ACCEPTED_SEEDS = TagKey.create(
-      Registries.ITEM, ResourceLocation.fromNamespaceAndPath("engineers_decor_reforged", "musli_bar_press_seeds")
+      Registries.ITEM, ResourceLocation.fromNamespaceAndPath("immersive_engineer_decor_controls_tool_reforged", "musli_bar_press_seeds")
    );
 
    public MusliBarPressItem(Properties properties) {
@@ -33,7 +33,7 @@ public class MusliBarPressItem extends TooltipItem {
       ItemStack output = new ItemStack((ItemLike)EngineerToolsModule.MUSLI_BAR.get(), 4);
       if (player.getAbilities().instabuild || hasItem(inventory, Items.BREAD) && hasItem(inventory, Items.APPLE) && hasAcceptedSeed(inventory)) {
          if (!canFit(inventory, output, !player.getAbilities().instabuild)) {
-            return fail(level, player, press, "item.engineers_decor_reforged.musli_bar_press.msg.full");
+            return fail(level, player, press, "item.immersive_engineer_decor_controls_tool_reforged.musli_bar_press.msg.full");
          }
 
          if (!level.isClientSide) {
@@ -49,12 +49,12 @@ public class MusliBarPressItem extends TooltipItem {
             }
 
             level.playSound(null, player.blockPosition(), SoundEvents.HONEY_BLOCK_PLACE, player.getSoundSource(), 0.6F, 1.1F);
-            player.displayClientMessage(Component.translatable("item.engineers_decor_reforged.musli_bar_press.msg.pressed"), true);
+            player.displayClientMessage(Component.translatable("item.immersive_engineer_decor_controls_tool_reforged.musli_bar_press.msg.pressed"), true);
          }
 
          return InteractionResultHolder.success(press);
       } else {
-         return fail(level, player, press, "item.engineers_decor_reforged.musli_bar_press.msg.ingredients");
+         return fail(level, player, press, "item.immersive_engineer_decor_controls_tool_reforged.musli_bar_press.msg.ingredients");
       }
    }
 

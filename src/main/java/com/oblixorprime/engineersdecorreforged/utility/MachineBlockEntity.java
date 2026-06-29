@@ -15,6 +15,7 @@ import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
@@ -441,7 +442,7 @@ public class MachineBlockEntity extends BaseContainerBlockEntity {
    public static String sanitizeLabelLine(String value) {
       if (value != null && !value.isBlank()) {
          StringBuilder builder = new StringBuilder();
-         value.codePoints().filter(codePoint -> codePoint >= 32 && codePoint != 127).limit(24L).forEach(builder::appendCodePoint);
+         value.codePoints().filter(codePoint -> !Character.isISOControl(codePoint)).limit(24L).forEach(builder::appendCodePoint);
          return builder.toString().trim();
       } else {
          return "";
@@ -631,7 +632,7 @@ public class MachineBlockEntity extends BaseContainerBlockEntity {
    protected Component getDefaultName() {
       MachineKind kind = this.kind();
       String key = kind == null ? "labeled_crate" : kind.registryName();
-      return Component.translatable("block.engineers_decor_reforged." + key);
+      return Component.translatable("block.immersive_engineer_decor_controls_tool_reforged." + key);
    }
 
    protected AbstractContainerMenu createMenu(int id, Inventory inventory) {
@@ -1209,14 +1210,14 @@ public class MachineBlockEntity extends BaseContainerBlockEntity {
       this.mineralCooling = tag.getBoolean("MineralCooling");
       this.hopperRange = Mth.clamp(tag.getInt("HopperRange"), 0, 4);
       this.hopperTransferCount = Mth.clamp(tag.getInt("HopperTransferCount"), 1, 32);
-      this.hopperLogic = tag.contains("HopperLogic") ? sanitizeTriggerLogic(tag.getInt("HopperLogic")) : 3;
+      this.hopperLogic = sanitizeTriggerLogic(savedIntOrDefault(tag, "HopperLogic", 3));
       this.hopperPeriod = Mth.clamp(tag.getInt("HopperPeriod"), 0, 100);
-      this.dropperSpeed = tag.contains("DropperSpeed") ? Mth.clamp(tag.getInt("DropperSpeed"), 0, 100) : 10;
+      this.dropperSpeed = Mth.clamp(savedIntOrDefault(tag, "DropperSpeed", 10), 0, 100);
       this.dropperXDeviation = Mth.clamp(tag.getInt("DropperXDeviation"), -100, 100);
       this.dropperYDeviation = Mth.clamp(tag.getInt("DropperYDeviation"), -100, 100);
       this.dropperNoise = Mth.clamp(tag.getInt("DropperNoise"), 0, 100);
-      this.dropperCount = tag.contains("DropperCount") ? Mth.clamp(tag.getInt("DropperCount"), 1, 32) : 1;
-      this.dropperLogic = tag.contains("DropperLogic") ? sanitizeDropperLogic(tag.getInt("DropperLogic")) : 2;
+      this.dropperCount = Mth.clamp(savedIntOrDefault(tag, "DropperCount", 1), 1, 32);
+      this.dropperLogic = sanitizeDropperLogic(savedIntOrDefault(tag, "DropperLogic", 2));
       this.dropperPeriod = Mth.clamp(tag.getInt("DropperPeriod"), 0, 100);
       this.dropperOpenTimer = Mth.clamp(tag.getInt("DropperOpenTimer"), 0, 400);
 
@@ -1224,8 +1225,8 @@ public class MachineBlockEntity extends BaseContainerBlockEntity {
          this.dropperFilterMatches[i] = Mth.clamp(tag.getInt("DropperFilterMatch" + i), 0, 2);
       }
 
-      this.placerLogic = tag.contains("PlacerLogic") ? sanitizeTriggerLogic(tag.getInt("PlacerLogic")) : 6;
-      this.electricalSpeed = tag.contains("ElectricalSpeed") ? Mth.clamp(tag.getInt("ElectricalSpeed"), 0, 3) : 1;
+      this.placerLogic = sanitizeTriggerLogic(savedIntOrDefault(tag, "PlacerLogic", 6));
+      this.electricalSpeed = Mth.clamp(savedIntOrDefault(tag, "ElectricalSpeed", 1), 0, 3);
       this.powerConsumptionField = tag.getInt("PowerConsumptionField");
 
       for (int i = 0; i < 2; i++) {
@@ -1233,6 +1234,10 @@ public class MachineBlockEntity extends BaseContainerBlockEntity {
       }
 
       this.normalizeLoadedState();
+   }
+
+   private static int savedIntOrDefault(CompoundTag tag, String key, int defaultValue) {
+      return tag.contains(key, Tag.TAG_INT) ? tag.getInt(key) : defaultValue;
    }
 
    protected void saveAdditional(CompoundTag tag, Provider registries) {
@@ -1493,6 +1498,13 @@ public class MachineBlockEntity extends BaseContainerBlockEntity {
                      this.progress = 0;
                      this.processTimeNeeded = 0;
                      this.cooldown = 12;
+                     this.setChanged();
+                     this.updateComparator();
+                  } else {
+                     this.progress = 0;
+                     this.processTimeNeeded = 0;
+                     this.cooldown = 12;
+                     this.setBooleanProperty(MachineBlocks.ACTIVE, false);
                      this.setChanged();
                      this.updateComparator();
                   }
@@ -3076,6 +3088,7 @@ public class MachineBlockEntity extends BaseContainerBlockEntity {
 
             this.dropItem(direction, drop);
             this.setChanged();
+            this.updateComparator();
          }
       }
    }

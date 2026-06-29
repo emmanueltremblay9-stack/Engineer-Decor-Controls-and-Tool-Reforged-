@@ -1,7 +1,11 @@
 package com.oblixorprime.engineersdecorreforged.gametest;
 
+import com.oblixorprime.engineersdecorreforged.EngineersDecorReforged;
+import com.oblixorprime.engineersdecorreforged.ModBlockEntities;
 import com.oblixorprime.engineersdecorreforged.ModBlocks;
+import com.oblixorprime.engineersdecorreforged.ModItems;
 import com.oblixorprime.engineersdecorreforged.ModMenus;
+import com.oblixorprime.engineersdecorreforged.ModRecipeSerializers;
 import com.oblixorprime.engineersdecorreforged.menu.MachineMenu;
 import com.oblixorprime.engineersdecorreforged.network.LabeledCrateLabelPayload;
 import com.oblixorprime.engineersdecorreforged.utility.MachineBlockEntity;
@@ -58,7 +62,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.registries.DeferredBlock;
 
-@GameTestHolder("engineers_decor_reforged")
+@GameTestHolder("immersive_engineer_decor_controls_tool_reforged")
 @PrefixGameTestTemplate(false)
 public final class MachineGuiGameTests {
    private static final String TEMPLATE = "empty";
@@ -82,6 +86,43 @@ public final class MachineGuiGameTests {
       new MachineGuiGameTests.MachineEntry(ModBlocks.SMALL_MILKING_MACHINE, MachineKind.SMALL_MILKING_MACHINE, 2, null),
       new MachineGuiGameTests.MachineEntry(ModBlocks.SMALL_TREE_CUTTER, MachineKind.SMALL_TREE_CUTTER, 10, null)
    );
+
+   @GameTest(template = "empty", timeoutTicks = 40)
+   public static void legacy_registry_ids_alias_to_renamed_mod_namespace(GameTestHelper helper) {
+      ResourceLocation legacyCrate = legacyId("labeled_crate");
+      helper.assertTrue(
+         BuiltInRegistries.BLOCK.get(legacyCrate) == ModBlocks.LABELED_CRATE.get(), "old labeled crate block id should alias to the renamed mod id"
+      );
+      helper.assertTrue(
+         BuiltInRegistries.ITEM.get(legacyCrate) == ((Block)ModBlocks.LABELED_CRATE.get()).asItem(),
+         "old labeled crate item id should alias to the renamed mod id"
+      );
+      helper.assertTrue(
+         BuiltInRegistries.ITEM.get(legacyId("redia_tool")) == ModItems.ORDERED_ITEMS.stream()
+            .filter(item -> item.getId().getPath().equals("redia_tool"))
+            .findFirst()
+            .orElseThrow()
+            .get(),
+         "old REDIA Tool item id should alias to the renamed mod id"
+      );
+      helper.assertTrue(
+         BuiltInRegistries.BLOCK_ENTITY_TYPE.get(legacyId("machine")) == ModBlockEntities.MACHINE.get(),
+         "old machine block entity id should alias to the renamed mod id"
+      );
+      helper.assertTrue(
+         BuiltInRegistries.MENU.get(legacyId("labeled_crate_menu")) == ModMenus.LABELED_CRATE.get(),
+         "old labeled crate menu id should alias to the renamed mod id"
+      );
+      helper.assertTrue(
+         BuiltInRegistries.RECIPE_SERIALIZER.get(legacyId("redia_tool_repair")) == ModRecipeSerializers.REDIA_TOOL_REPAIR.get(),
+         "old REDIA repair recipe serializer id should alias to the renamed mod id"
+      );
+      helper.succeed();
+   }
+
+   private static ResourceLocation legacyId(String path) {
+      return ResourceLocation.fromNamespaceAndPath(EngineersDecorReforged.LEGACY_MOD_ID, path);
+   }
 
    private MachineGuiGameTests() {
    }
@@ -133,6 +174,26 @@ public final class MachineGuiGameTests {
          LabeledCrateLabelPayload decoded = LabeledCrateLabelPayload.STREAM_CODEC.decode(buffer);
          helper.assertValueEqual(fullLine, decoded.line0(), "labeled crate label packet should round-trip supplementary characters in line 0");
          helper.assertValueEqual(fullLine, decoded.line1(), "labeled crate label packet should round-trip supplementary characters in line 1");
+      } finally {
+         buffer.release();
+      }
+
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 40)
+   public static void labeled_crate_label_payload_strips_unicode_controls(GameTestHelper helper) {
+      String rawLine = "A\u0000B\u001FC\u007FD\u0085E\u009FF";
+      String sanitizedLine = "ABCDEF";
+      LabeledCrateLabelPayload payload = new LabeledCrateLabelPayload(helper.absolutePos(TEST_POS), rawLine, rawLine);
+      RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), helper.getLevel().registryAccess());
+
+      try {
+         helper.assertValueEqual(sanitizedLine, MachineBlockEntity.sanitizeLabelLine(rawLine), "labeled crate labels should strip all control characters");
+         LabeledCrateLabelPayload.STREAM_CODEC.encode(buffer, payload);
+         LabeledCrateLabelPayload decoded = LabeledCrateLabelPayload.STREAM_CODEC.decode(buffer);
+         helper.assertValueEqual(sanitizedLine, decoded.line0(), "labeled crate label packet should sanitize controls in line 0");
+         helper.assertValueEqual(sanitizedLine, decoded.line1(), "labeled crate label packet should sanitize controls in line 1");
       } finally {
          buffer.release();
       }
@@ -943,6 +1004,42 @@ public final class MachineGuiGameTests {
       helper.succeed();
    }
 
+   @GameTest(template = "empty", timeoutTicks = 80)
+   public static void machine_defaulted_saved_fields_ignore_wrong_nbt_types(GameTestHelper helper) {
+      MachineBlockEntity hopper = placeMachine(helper, ModBlocks.FACTORY_HOPPER, MachineKind.FACTORY_HOPPER);
+      CompoundTag hopperSave = hopper.saveWithFullMetadata(helper.getLevel().registryAccess());
+      hopperSave.putString("HopperLogic", "bad");
+      MachineBlockEntity loadedHopper = new MachineBlockEntity(hopper.getBlockPos(), hopper.getBlockState());
+      loadedHopper.loadWithComponents(hopperSave, helper.getLevel().registryAccess());
+      helper.assertValueEqual(loadedHopper.dataAccessForTests().get(2), 3, "factory hopper should use its default logic when saved logic is not numeric");
+
+      MachineBlockEntity dropper = placeMachineAt(helper, TEST_POS.offset(3, 0, 0), ModBlocks.FACTORY_DROPPER, MachineKind.FACTORY_DROPPER);
+      CompoundTag dropperSave = dropper.saveWithFullMetadata(helper.getLevel().registryAccess());
+      dropperSave.putString("DropperSpeed", "bad");
+      dropperSave.putString("DropperCount", "bad");
+      dropperSave.putString("DropperLogic", "bad");
+      MachineBlockEntity loadedDropper = new MachineBlockEntity(dropper.getBlockPos(), dropper.getBlockState());
+      loadedDropper.loadWithComponents(dropperSave, helper.getLevel().registryAccess());
+      helper.assertValueEqual(loadedDropper.dataAccessForTests().get(0), 10, "factory dropper should use its default speed when saved speed is not numeric");
+      helper.assertValueEqual(loadedDropper.dataAccessForTests().get(4), 1, "factory dropper should use its default stack count when saved count is not numeric");
+      helper.assertValueEqual(loadedDropper.dataAccessForTests().get(5), 2, "factory dropper should use its default logic when saved logic is not numeric");
+
+      MachineBlockEntity placer = placeMachineAt(helper, TEST_POS.offset(6, 0, 0), ModBlocks.FACTORY_PLACER, MachineKind.FACTORY_PLACER);
+      CompoundTag placerSave = placer.saveWithFullMetadata(helper.getLevel().registryAccess());
+      placerSave.putString("PlacerLogic", "bad");
+      MachineBlockEntity loadedPlacer = new MachineBlockEntity(placer.getBlockPos(), placer.getBlockState());
+      loadedPlacer.loadWithComponents(placerSave, helper.getLevel().registryAccess());
+      helper.assertValueEqual(loadedPlacer.dataAccessForTests().get(0), 6, "factory placer should use its default logic when saved logic is not numeric");
+
+      MachineBlockEntity electrical = placeMachineAt(helper, TEST_POS.offset(9, 0, 0), ModBlocks.SMALL_ELECTRICAL_FURNACE, MachineKind.SMALL_ELECTRICAL_FURNACE);
+      CompoundTag electricalSave = electrical.saveWithFullMetadata(helper.getLevel().registryAccess());
+      electricalSave.putString("ElectricalSpeed", "bad");
+      MachineBlockEntity loadedElectrical = new MachineBlockEntity(electrical.getBlockPos(), electrical.getBlockState());
+      loadedElectrical.loadWithComponents(electricalSave, helper.getLevel().registryAccess());
+      helper.assertValueEqual(loadedElectrical.dataAccessForTests().get(4), 1, "small electrical furnace should use its default speed when saved speed is not numeric");
+      helper.succeed();
+   }
+
    @GameTest(template = "empty", timeoutTicks = 120)
    public static void factory_dropper_manual_gui_trigger_drops_configured_stack_size(GameTestHelper helper) {
       Player player = helper.makeMockPlayer(GameType.CREATIVE);
@@ -1078,6 +1175,44 @@ public final class MachineGuiGameTests {
          .anyMatch(item -> item.getItem().getCount() == 1);
       helper.assertTrue(dirtDropFound, "factory placer should spawn the blocked stock item as an item entity");
       helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 120)
+   public static void factory_placer_spit_out_updates_adjacent_comparator(GameTestHelper helper) {
+      Player player = helper.makeMockPlayer(GameType.CREATIVE);
+      BlockPos comparatorPos = TEST_POS.east();
+      BlockPos targetPos = TEST_POS.north();
+      helper.setBlock(comparatorPos.below(), Blocks.STONE);
+      helper.setBlock(targetPos, Blocks.STONE);
+      helper.setBlock(
+         TEST_POS,
+         (BlockState)((MachineBlocks.DirectionalMachineBlock)ModBlocks.FACTORY_PLACER.get()).defaultBlockState().setValue(MachineBlocks.FACING, Direction.NORTH)
+      );
+      BlockEntity blockEntity = helper.getLevel().getBlockEntity(helper.absolutePos(TEST_POS));
+      helper.assertTrue(blockEntity instanceof MachineBlockEntity, "factory placer should create a machine block entity");
+      MachineBlockEntity machine = (MachineBlockEntity)blockEntity;
+      machine.setItem(0, new ItemStack(Items.DIRT));
+      helper.setBlock(comparatorPos, (BlockState)Blocks.COMPARATOR.defaultBlockState().setValue(ComparatorBlock.FACING, Direction.WEST));
+      helper.getLevel().updateNeighbourForOutputSignal(helper.absolutePos(TEST_POS), helper.getBlockState(TEST_POS).getBlock());
+      BlockEntity comparatorEntity = helper.getLevel().getBlockEntity(helper.absolutePos(comparatorPos));
+      helper.assertTrue(comparatorEntity instanceof ComparatorBlockEntity, "factory placer comparator test should keep its block entity");
+      helper.runAfterDelay(4L, () -> {
+         helper.assertTrue(
+            ((ComparatorBlockEntity)comparatorEntity).getOutputSignal() > 0, "stocked factory placer should prime the adjacent comparator"
+         );
+         MachineMenu menu = new MachineMenu(MachineKind.FACTORY_PLACER, 7, player.getInventory(), machine, machine.dataAccessForTests());
+         menu.handleAction(player, 21, 1, 0);
+         tickMachine(helper, machine, 12);
+         helper.assertTrue(machine.getItem(0).isEmpty(), "blocked manual factory placer trigger should spit out its stocked block");
+         helper.runAfterDelay(4L, () -> {
+            helper.assertValueEqual(
+               0,
+               ((ComparatorBlockEntity)comparatorEntity).getOutputSignal(),
+               "factory placer spit-out should refresh adjacent comparator output"
+            );
+            helper.succeed();
+         });
+      });
    }
 
    @GameTest(template = "empty", timeoutTicks = 80)
@@ -1539,6 +1674,38 @@ public final class MachineGuiGameTests {
       helper.succeed();
    }
 
+   @GameTest(template = "empty", timeoutTicks = 80)
+   public static void small_block_breaker_clears_active_state_when_drop_buffer_full(GameTestHelper helper) {
+      helper.setBlock(TEST_POS, Blocks.AIR);
+      helper.setBlock(
+         TEST_POS,
+         (BlockState)((MachineBlocks.ActiveHorizontalMachineBlock)ModBlocks.SMALL_BLOCK_BREAKER.get())
+            .defaultBlockState()
+            .setValue(MachineBlocks.HORIZONTAL_FACING, Direction.EAST)
+      );
+      BlockEntity blockEntity = helper.getLevel().getBlockEntity(helper.absolutePos(TEST_POS));
+      helper.assertTrue(blockEntity instanceof MachineBlockEntity, "small block breaker should create a machine block entity");
+      MachineBlockEntity machine = (MachineBlockEntity)blockEntity;
+
+      for (int slot = 0; slot < 10; slot++) {
+         machine.setItem(slot, new ItemStack(Items.COBBLESTONE, 64));
+      }
+
+      BlockPos target = TEST_POS.east();
+      helper.setBlock(target, Blocks.DIRT);
+      tickMachine(helper, machine, 31);
+      helper.assertTrue(helper.getBlockState(target).is(Blocks.DIRT), "full drop buffer should leave the target block intact");
+      helper.assertBlockProperty(TEST_POS, MachineBlocks.ACTIVE, false);
+      helper.assertValueEqual(0, machine.dataAccessForTests().get(1), "blocked small block breaker should clear stale progress");
+      helper.assertValueEqual(0, machine.dataAccessForTests().get(3), "blocked small block breaker should clear stale required work time");
+      AABB dropSearch = new AABB(helper.absolutePos(TEST_POS)).inflate(3.0);
+      helper.assertTrue(
+         helper.getLevel().getEntitiesOfClass(ItemEntity.class, dropSearch, item -> item.getItem().is(Items.DIRT)).isEmpty(),
+         "full drop buffer should not spill blocked target drops into the world"
+      );
+      helper.succeed();
+   }
+
    @GameTest(template = "empty", timeoutTicks = 120)
    public static void small_tree_cutter_routes_log_drops_into_internal_buffer(GameTestHelper helper) {
       helper.setBlock(TEST_POS, Blocks.AIR);
@@ -1825,7 +1992,7 @@ public final class MachineGuiGameTests {
    }
 
    private static void assertRecipe(GameTestHelper helper, String name) {
-      ResourceLocation id = ResourceLocation.fromNamespaceAndPath("engineers_decor_reforged", name);
+      ResourceLocation id = ResourceLocation.fromNamespaceAndPath("immersive_engineer_decor_controls_tool_reforged", name);
       helper.assertTrue(helper.getLevel().getRecipeManager().byKey(id).isPresent(), "missing recipe " + id);
    }
 

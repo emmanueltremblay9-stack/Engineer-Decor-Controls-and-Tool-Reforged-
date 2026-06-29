@@ -444,6 +444,9 @@ public class RediaToolItem extends TooltipItem {
       if (replacement == null) {
          return InteractionResult.PASS;
       }
+      if ((replacement.is(Blocks.FARMLAND) || replacement.is(Blocks.DIRT_PATH)) && !level.getBlockState(pos.above()).isAir()) {
+         return InteractionResult.PASS;
+      }
 
       level.playSound(player, pos, SoundEvents.HOE_TILL, SoundSource.BLOCKS, 0.8F, 1.1F);
       if (!level.isClientSide) {

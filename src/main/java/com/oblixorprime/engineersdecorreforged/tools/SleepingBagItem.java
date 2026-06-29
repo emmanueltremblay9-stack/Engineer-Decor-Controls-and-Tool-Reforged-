@@ -38,14 +38,14 @@ public class SleepingBagItem extends TooltipItem {
       }
 
       if (level.dimension() != Level.OVERWORLD) {
-         return fail(player, stack, "item.engineers_decor_reforged.sleeping_bag.msg.dimension");
+         return fail(player, stack, "item.immersive_engineer_decor_controls_tool_reforged.sleeping_bag.msg.dimension");
       }
 
       long dayTime = Math.floorMod(level.getDayTime(), 24000L);
       if (dayTime >= 12542L && dayTime <= 23459L) {
          AABB area = AABB.ofSize(player.position(), 16.0, 8.0, 16.0);
          if (!level.getEntitiesOfClass(Monster.class, area, LivingEntity::isAlive).isEmpty()) {
-            return fail(player, stack, "item.engineers_decor_reforged.sleeping_bag.msg.unsafe");
+            return fail(player, stack, "item.immersive_engineer_decor_controls_tool_reforged.sleeping_bag.msg.unsafe");
          }
 
          if (level instanceof ServerLevel serverLevel) {
@@ -59,10 +59,10 @@ public class SleepingBagItem extends TooltipItem {
          }
 
          level.playSound(null, player.blockPosition(), SoundEvents.WOOL_PLACE, player.getSoundSource(), 0.8F, 0.8F);
-         player.displayClientMessage(Component.translatable("item.engineers_decor_reforged.sleeping_bag.msg.rested"), true);
+         player.displayClientMessage(Component.translatable("item.immersive_engineer_decor_controls_tool_reforged.sleeping_bag.msg.rested"), true);
          return InteractionResultHolder.success(stack);
       } else {
-         return fail(player, stack, "item.engineers_decor_reforged.sleeping_bag.msg.daytime");
+         return fail(player, stack, "item.immersive_engineer_decor_controls_tool_reforged.sleeping_bag.msg.daytime");
       }
    }
 

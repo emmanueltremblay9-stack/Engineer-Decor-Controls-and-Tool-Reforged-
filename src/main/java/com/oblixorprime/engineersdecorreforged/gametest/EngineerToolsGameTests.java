@@ -55,7 +55,7 @@ import net.neoforged.neoforge.common.ItemAbilities;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
-@GameTestHolder("engineers_decor_reforged")
+@GameTestHolder("immersive_engineer_decor_controls_tool_reforged")
 @PrefixGameTestTemplate(false)
 public final class EngineerToolsGameTests {
    private static final String TEMPLATE = "empty";
@@ -202,6 +202,25 @@ public final class EngineerToolsGameTests {
       ((Item)EngineerToolsModule.REDIA_TOOL.get()).useOn(context(helper, player, redia, TEST_POS, Direction.UP));
       helper.assertTrue(helper.getBlockState(TEST_POS).is(Blocks.STONE), "REDIA Tool should leave unworkable blocks unchanged");
       helper.assertValueEqual(0, redia.getDamageValue(), "failed REDIA use should not damage the tool");
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 40)
+   public static void redia_tool_rejects_blocked_air_sensitive_ground_states(GameTestHelper helper) {
+      Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+      player.setShiftKeyDown(true);
+      ItemStack redia = new ItemStack((ItemLike)EngineerToolsModule.REDIA_TOOL.get());
+      helper.setBlock(TEST_POS, Blocks.DIRT);
+      helper.setBlock(TEST_POS.above(), Blocks.STONE);
+      ((Item)EngineerToolsModule.REDIA_TOOL.get()).useOn(context(helper, player, redia, TEST_POS, Direction.UP));
+      helper.assertTrue(helper.getBlockState(TEST_POS).is(Blocks.DIRT), "REDIA Tool should not till dirt when the block above is occupied");
+      helper.assertValueEqual(0, redia.getDamageValue(), "blocked REDIA tilling should not damage the tool");
+
+      helper.setBlock(TEST_POS, Blocks.COARSE_DIRT);
+      helper.setBlock(TEST_POS.above(), Blocks.STONE);
+      ((Item)EngineerToolsModule.REDIA_TOOL.get()).useOn(context(helper, player, redia, TEST_POS, Direction.UP));
+      helper.assertTrue(helper.getBlockState(TEST_POS).is(Blocks.COARSE_DIRT), "REDIA Tool should not flatten coarse dirt when the block above is occupied");
+      helper.assertValueEqual(0, redia.getDamageValue(), "blocked REDIA flattening should not damage the tool");
       helper.succeed();
    }
 
@@ -414,6 +433,22 @@ public final class EngineerToolsGameTests {
    }
 
    @GameTest(template = "empty", timeoutTicks = 40)
+   public static void ariadne_coal_creative_placement_does_not_wear_or_break(GameTestHelper helper) {
+      Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+      player.getAbilities().instabuild = true;
+      ItemStack marker = new ItemStack((ItemLike)EngineerToolsModule.ARIADNE_COAL.get());
+      marker.setDamageValue(99);
+      player.setItemInHand(InteractionHand.MAIN_HAND, marker);
+      helper.setBlock(TEST_POS, Blocks.STONE);
+      helper.setBlock(TEST_POS.north(), Blocks.AIR);
+      ((Item)EngineerToolsModule.ARIADNE_COAL.get()).useOn(context(helper, player, marker, TEST_POS, Direction.NORTH));
+      helper.assertTrue(helper.getBlockState(TEST_POS.north()).is((Block)ModBlocks.ARIADNE_MARKER.get()), "creative Ariadne Coal use should still place a marker");
+      helper.assertTrue(player.getMainHandItem().is((Item)EngineerToolsModule.ARIADNE_COAL.get()), "creative Ariadne Coal use should not break the item");
+      helper.assertValueEqual(99, player.getMainHandItem().getDamageValue(), "creative Ariadne Coal use should not wear the item");
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 40)
    public static void sleeping_bag_skips_night_without_setting_spawn(GameTestHelper helper) {
       Player player = helper.makeMockPlayer(GameType.SURVIVAL);
       ItemStack bag = new ItemStack((ItemLike)EngineerToolsModule.SLEEPING_BAG.get());
@@ -483,6 +518,23 @@ public final class EngineerToolsGameTests {
       tracker.getItem().appendHoverText(tracker, TooltipContext.of(helper.getLevel()), tooltip, TooltipFlag.NORMAL);
       helper.assertFalse(
          tooltip.stream().anyMatch(line -> line.getString().contains("Location:")), "tracker should not show a location when coordinate data is incomplete"
+      );
+      helper.succeed();
+   }
+
+   @GameTest(template = "empty", timeoutTicks = 40)
+   public static void tracker_tooltip_ignores_malformed_saved_target_data(GameTestHelper helper) {
+      ItemStack tracker = new ItemStack((ItemLike)EngineerToolsModule.TRACKER.get());
+      CompoundTag malformed = new CompoundTag();
+      malformed.putString("target_dimension", helper.getLevel().dimension().location().toString());
+      malformed.putString("target_x", "not-a-number");
+      malformed.putString("target_y", "not-a-number");
+      malformed.putString("target_z", "not-a-number");
+      tracker.set(DataComponents.CUSTOM_DATA, CustomData.of(malformed));
+      List<Component> tooltip = new ArrayList<>();
+      tracker.getItem().appendHoverText(tracker, TooltipContext.of(helper.getLevel()), tooltip, TooltipFlag.NORMAL);
+      helper.assertFalse(
+         tooltip.stream().anyMatch(line -> line.getString().contains("Location:")), "tracker should not show a fallback origin location for malformed coordinate data"
       );
       helper.succeed();
    }
@@ -558,7 +610,7 @@ public final class EngineerToolsGameTests {
       Player player = helper.makeMockPlayer(GameType.SURVIVAL);
       ItemStack box = new ItemStack((ItemLike)EngineerToolsModule.MATERIAL_BOX.get());
       CompoundTag tag = new CompoundTag();
-      tag.putString("stored_item", "engineers_decor_reforged:missing_material");
+      tag.putString("stored_item", "immersive_engineer_decor_controls_tool_reforged:missing_material");
       tag.putInt("stored_count", 48);
       box.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
       player.setItemInHand(InteractionHand.MAIN_HAND, box);
@@ -759,7 +811,7 @@ public final class EngineerToolsGameTests {
    }
 
    private static void assertRecipe(GameTestHelper helper, String name) {
-      ResourceLocation id = ResourceLocation.fromNamespaceAndPath("engineers_decor_reforged", name);
+      ResourceLocation id = ResourceLocation.fromNamespaceAndPath("immersive_engineer_decor_controls_tool_reforged", name);
       helper.assertTrue(helper.getLevel().getRecipeManager().byKey(id).isPresent(), "missing recipe " + id);
    }
 }

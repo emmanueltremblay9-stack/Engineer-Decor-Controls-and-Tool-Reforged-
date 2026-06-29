@@ -9,7 +9,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;
 import net.minecraft.resources.ResourceLocation;
 
 public record LabeledCrateLabelPayload(BlockPos pos, String line0, String line1) implements CustomPacketPayload {
-   public static final Type<LabeledCrateLabelPayload> TYPE = new Type(ResourceLocation.fromNamespaceAndPath("engineers_decor_reforged", "labeled_crate_label"));
+   public static final Type<LabeledCrateLabelPayload> TYPE = new Type(ResourceLocation.fromNamespaceAndPath("immersive_engineer_decor_controls_tool_reforged", "labeled_crate_label"));
    public static final StreamCodec<RegistryFriendlyByteBuf, LabeledCrateLabelPayload> STREAM_CODEC = new StreamCodec<RegistryFriendlyByteBuf, LabeledCrateLabelPayload>() {
       public LabeledCrateLabelPayload decode(RegistryFriendlyByteBuf buffer) {
          return new LabeledCrateLabelPayload(buffer.readBlockPos(), buffer.readUtf(MachineBlockEntity.LABEL_MAX_UTF16_UNITS), buffer.readUtf(MachineBlockEntity.LABEL_MAX_UTF16_UNITS));

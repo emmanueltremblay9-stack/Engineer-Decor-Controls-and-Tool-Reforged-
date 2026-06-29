@@ -14,7 +14,7 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers;
 
-@EventBusSubscriber(modid = "engineers_decor_reforged", bus = Bus.MOD, value = Dist.CLIENT)
+@EventBusSubscriber(modid = "immersive_engineer_decor_controls_tool_reforged", bus = Bus.MOD, value = Dist.CLIENT)
 public final class ClientModEvents {
    private ClientModEvents() {
    }
